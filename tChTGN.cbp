@@ -1,0 +1,64 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes" ?>
+<CodeBlocks_project_file>
+	<FileVersion major="1" minor="6" />
+	<Project>
+		<Option title="tChTGN" />
+		<Option pch_mode="2" />
+		<Option compiler="gcc" />
+		<Build>
+			<Target title="Debug">
+				<Option output="bin/Debug/tChTGN" prefix_auto="1" extension_auto="1" />
+				<Option object_output="obj/Debug/" />
+				<Option type="1" />
+				<Option compiler="gcc" />
+				<Option parameters="&lt;dataw" />
+				<Compiler>
+					<Add option="-g" />
+				</Compiler>
+			</Target>
+			<Target title="Release">
+				<Option output="bin/Release/tChTGN" prefix_auto="1" extension_auto="1" />
+				<Option object_output="obj/Release/" />
+				<Option type="1" />
+				<Option compiler="gcc" />
+				<Option parameters="&lt;dataw" />
+				<Compiler>
+					<Add option="-O2" />
+				</Compiler>
+				<Linker>
+					<Add option="-s" />
+				</Linker>
+			</Target>
+		</Build>
+		<Compiler>
+			<Add option="-Wall" />
+			<Add option="-std=c++11" />
+			<Add option="-fexceptions -fPIC" />
+			<Add directory="eigenlib" />
+		</Compiler>
+		<Unit filename="Determinant.cpp" />
+		<Unit filename="Determinant.h" />
+		<Unit filename="Edge.cpp" />
+		<Unit filename="Edge.h" />
+		<Unit filename="Graph.h" />
+		<Unit filename="InEdge.h" />
+		<Unit filename="OutEdge.h" />
+		<Unit filename="PrecMatrix.cpp" />
+		<Unit filename="PrecMatrix.h" />
+		<Unit filename="Simulate.cpp" />
+		<Unit filename="Simulate.h" />
+		<Unit filename="TCHLib.cpp" />
+		<Unit filename="TCHLib.h" />
+		<Unit filename="TCHULib.cpp" />
+		<Unit filename="TCHULib.h" />
+		<Unit filename="UFDS.h" />
+		<Unit filename="Vertex.h" />
+		<Unit filename="main.cpp" />
+		<Extensions>
+			<code_completion />
+			<envvars />
+			<debugger />
+			<lib_finder disable_auto="1" />
+		</Extensions>
+	</Project>
+</CodeBlocks_project_file>
