@@ -11,7 +11,7 @@
 				<Option object_output="obj/Debug/" />
 				<Option type="1" />
 				<Option compiler="gcc" />
-				<Option parameters="&lt;dataw" />
+				<Option parameters="&lt;dataw &gt;chlt" />
 				<Compiler>
 					<Add option="-g" />
 				</Compiler>
@@ -36,23 +36,20 @@
 			<Add option="-fexceptions -fPIC" />
 			<Add directory="eigenlib" />
 		</Compiler>
-		<Unit filename="Determinant.cpp" />
-		<Unit filename="Determinant.h" />
-		<Unit filename="Edge.cpp" />
-		<Unit filename="Edge.h" />
-		<Unit filename="Graph.h" />
-		<Unit filename="InEdge.h" />
-		<Unit filename="OutEdge.h" />
-		<Unit filename="PrecMatrix.cpp" />
-		<Unit filename="PrecMatrix.h" />
-		<Unit filename="Simulate.cpp" />
-		<Unit filename="Simulate.h" />
-		<Unit filename="TCHLib.cpp" />
-		<Unit filename="TCHLib.h" />
-		<Unit filename="TCHULib.cpp" />
-		<Unit filename="TCHULib.h" />
-		<Unit filename="UFDS.h" />
-		<Unit filename="Vertex.h" />
+		<Unit filename="GN/PrecMatrix.cpp" />
+		<Unit filename="GN/PrecMatrix.h" />
+		<Unit filename="building/stopCriterion/none.h" />
+		<Unit filename="building/stopCriterion/stopCriterion.h" />
+		<Unit filename="building/undirectedModel/ChLT/ChLT.h" />
+		<Unit filename="building/undirectedModel/UndirectedModel.cpp" />
+		<Unit filename="building/undirectedModel/UndirectedModel.h" />
+		<Unit filename="graph/Edge.cpp" />
+		<Unit filename="graph/Edge.h" />
+		<Unit filename="graph/Graph.h" />
+		<Unit filename="graph/InEdge.h" />
+		<Unit filename="graph/OutEdge.h" />
+		<Unit filename="graph/UFDS.h" />
+		<Unit filename="graph/Vertex.h" />
 		<Unit filename="main.cpp" />
 		<Extensions>
 			<code_completion />

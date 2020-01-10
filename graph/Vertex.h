@@ -11,8 +11,8 @@ class Vertex
 {
     public:
         Vertex(int id, vD value): id(id), data(value) {}
-        void AddOutgoingEdge(int end_id, double cost, eD edata);
-        void AddIngoingEdge(int origin_id, double cost, eD edata);
+        void AddOutgoingEdge(int end_id, eD edata);
+        void AddIngoingEdge(int origin_id, eD edata);
         const int GetID() const;
 
         vD & GetData();
@@ -27,15 +27,15 @@ class Vertex
 };
 
 template <typename vD, typename eD>
-void Vertex<vD,eD>::AddOutgoingEdge(int end_id, double cost, eD edata)
+void Vertex<vD,eD>::AddOutgoingEdge(int end_id, eD edata)
 {
-    outgoing_edges.push_back(OutEdge<eD>(end_id, cost,edata));
+    outgoing_edges.push_back(OutEdge<eD>(end_id, edata));
 }
 
 template <typename vD, typename eD>
-void Vertex<vD,eD>::AddIngoingEdge(int origin_id, double cost, eD edata)
+void Vertex<vD,eD>::AddIngoingEdge(int origin_id, eD edata)
 {
-    ingoing_edges.push_back(InEdge<eD>(origin_id, cost,edata));
+    ingoing_edges.push_back(InEdge<eD>(origin_id, edata));
 }
 
 template <typename vD, typename eD>
@@ -61,7 +61,5 @@ vector<InEdge<eD>> & Vertex<vD,eD>::GetIngoingEdges()
 {
     return ingoing_edges;
 }
-
-
 
 #endif // VERTEX_HPP_INCLUDED

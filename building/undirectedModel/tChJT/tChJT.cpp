@@ -4,22 +4,18 @@
 
 #include <queue>
 #include <iostream>
+#include <fstream>
+#include <dirent.h>
 
-
-///-----Properties
-const int TCHULib::getOrder() const
+double TCHULib::getWeight()
 {
-    return k;
+    return weight;
 }
 const int TCHULib::getRoot() const
 {
     return root;
 }
 
-const int TCHULib::getN() const
-{
-    return n;
-}
 const vector<int>& TCHULib::getPerm() const
 {
     return perm;
@@ -93,6 +89,8 @@ void TCHULib::DFSCHLT(int vertex_id, vector<bool> & visited, Graph<int,int>& CHL
             cl.nodes.push_back(vertex_id);
             cl.nodes.push_back(neighbor_id);
             cl.active=cl.exists=true;
+            cl.weight=-0.5*log(1.0-corrM[vertex_id][neighbor_id]*corrM[vertex_id][neighbor_id]);
+            weight+=cl.weight;
             int id=tcjt->AddVertex(cl);
             if(!root)
             {
@@ -104,6 +102,7 @@ void TCHULib::DFSCHLT(int vertex_id, vector<bool> & visited, Graph<int,int>& CHL
                 s.dVA=s2.v[0];
                 s2.dVA=s.v[0];
                 s.complete=s2.complete=true;
+                s.weight=s2.weight=0.0;
                 tcjt->AddEdge(parentCluster,id,s);
                 tcjt->AddEdge(id,parentCluster,s2);
             }
@@ -126,6 +125,7 @@ TCHULib::TCHULib(Graph<int, int>& CHLT, int initNode, double** correlation, doub
     tcjt= new Graph<Cherry,Separator>(true);
     DAG=new Graph<int,int>(true);
     vector<bool> visited(CHLT.VertexCount(),false);
+    weight=0.0;
     DFSCHLT(initNode,visited,CHLT,true,-1);
     if(doDAG)
         buildDAG();
@@ -159,8 +159,8 @@ bool TCHULib::isValid(UTableRow& T)
 void TCHULib::increaseOrder()
 {
     FillTable();
-    //priority_queue<UTableRow> ax;
-    /*while(!pq.empty())
+    /*priority_queue<UTableRow> ax;
+    while(!pq.empty())
     {
         UTableRow t=pq.top();
         ax.push(t);
@@ -184,6 +184,7 @@ void TCHULib::increaseOrder()
         {                                                           ///If maximum weight change is valid, add var v to active cluster
             tcjt->GetVertex(T.CA).GetData().nodes.push_back(T.v);
             tcjt->GetVertex(T.CA).GetData().active=false;
+            tcjt->GetVertex(T.CA).GetData().weight=T.wCAn;
             activeCherries--;
             if(!rootUpdated)
             {
@@ -210,6 +211,7 @@ void TCHULib::increaseOrder()
                     {
                         e.GetData().complete=false;
                         e.GetData().nodes.push_back(T.v);
+                        e.GetData().weight=T.wSn;
                     }
 
                 for (OutEdge<Separator>& e : tcjt->GetVertex(T.CD).GetOutgoingEdges())       ///Find the separator between CA and CD and add the variable v
@@ -217,6 +219,7 @@ void TCHULib::increaseOrder()
                     {
                         e.GetData().complete=false;
                         e.GetData().nodes.push_back(T.v);
+                        e.GetData().weight=T.wSn;
                     }
             }
 
@@ -232,17 +235,14 @@ void TCHULib::increaseOrder()
                         newT.CA=e.GetDestID();
                         newT.ucase=2;
                         newT.CD=T.CA;             ///Active cluster is now the donor cluster
-                        newT.w=getW(newT.CA,newT.CD,e.GetData().nodes,newT.v,newT.ucase);  ///Donor cluster (active cluster) is now size k+1, and its active neighbor cluster is size K, so case 2 always happen
+                        getW(newT,newT.CA,newT.CD,e.GetData().nodes,newT.v,newT.ucase);  ///Donor cluster (active cluster) is now size k+1, and its active neighbor cluster is size K, so case 2 always happen
                         pq.push(newT);
                     }
                 }
-            //Print(cout);
-            //cout<<endl;
         }
     }
     k++;
     ProcessBUDS();
-
     clean();
 }
 
@@ -258,44 +258,31 @@ void TCHULib::ProcessBUDS()
         vector<int> v1,v2;
         Getdonating_V_ariable(vertex_id,v1,neighbor_id);
         Getdonating_V_ariable(neighbor_id,v2,vertex_id);
-        double maxW=-1e40;
+        double maxW=-1e40, ws1=0.0,ws2=0.0,wc=0.0;
+
         int p1,p2;
-        bool acc=false;
         for(int c : v1)
             for(int d : v2)
             {
-                double wi=getWBUD(pp.second.second,c,d);
+                double wi=0.0,wsi1=0.0,wsi2=0.0,wci=0.0;
+                getWBUD(wi,ws1,ws2,wc,pp.second.second,c,d);
                 if(wi>maxW)
                 {
                     maxW=wi;
+                    ws1=wsi1;
+                    ws2=wsi2;
+                    wc=wci;
                     p1=c;
                     p2=d;
-                    acc=true;
                 }
             }
-        if(!acc)
-        {
-            maxW=-1e50;
-            for(int c : v1)
-                for(int d : v2)
-                {
-                    maxW=-1e50;
-                    double wi=getWBUD(pp.second.second,c,d);
-                    if(wi>maxW)
-                    {
-                        maxW=wi;
-                        p1=c;
-                        p2=d;
-                        acc=true;
-                    }
-                }
-        }
         Cherry vn;
         vn.active=vn.exists=true;
         for(int i : pp.second.second)
             vn.nodes.push_back(i);
         vn.nodes.push_back(p1);
         vn.nodes.push_back(p2);
+        vn.weight=wc;
         int v_id=tcjt->AddVertex(vn);
         Separator nS1,nS2,nS3,nS4;
         for(int i : pp.second.second)
@@ -319,21 +306,25 @@ void TCHULib::ProcessBUDS()
         nS1.dVA=p01;
         nS1.v.push_back(p2);
         nS1.complete=true;
+        nS1.weight=ws1;
         tcjt->AddEdge(vertex_id,v_id,nS1,0.0,false);
 
         nS2.dVA=p2;
         nS2.v.push_back(p01);
         nS2.complete=true;
+        nS2.weight=ws1;
         tcjt->AddEdge(v_id,vertex_id,nS2,0.0,false);
 
         nS3.dVA=p1;
         nS3.v.push_back(p02);
         nS3.complete=true;
+        nS3.weight=ws2;
         tcjt->AddEdge(v_id,neighbor_id,nS3,0.0,false);
 
         nS4.dVA=p02;
         nS4.v.push_back(p1);
         nS4.complete=true;
+        nS4.weight=ws2;
         tcjt->AddEdge(neighbor_id,v_id,nS4,0.0,false);
     }
 }
@@ -380,7 +371,9 @@ void TCHULib::DFSTable(int vertex_id,vector<bool> & visited)
             t.v=e.GetData().v[0];
             t2.v=e.GetData().dVA;
             t.ucase=t2.ucase=4;
-            t.w=t2.w=getW(vertex_id,neighbor_id,e.GetData().nodes,e.GetData().v[0],t.ucase);
+            getW(t,vertex_id,neighbor_id,e.GetData().nodes,e.GetData().v[0],t.ucase);
+            t2.w=t.w;
+            t2.wCAn=t.wCAn;
             pq.push(t);
             pq.push(t2);
             DFSTable(neighbor_id,visited);
@@ -389,7 +382,7 @@ void TCHULib::DFSTable(int vertex_id,vector<bool> & visited)
 }
 
 
-double TCHULib::getW(int CA, int CD, vector<int> &sep,int v, int ucase)
+void TCHULib::getW(UTableRow &T, int CA, int CD, vector<int> &sep, int v, int ucase)
 {
     if(ucase==2)
     {
@@ -402,18 +395,15 @@ double TCHULib::getW(int CA, int CD, vector<int> &sep,int v, int ucase)
         for(int c=0;c<ssep;c++)
                 for(int d=0;d<ssep;d++)
                     aux[c][d]=corrM[sep[c]][sep[d]];
-        if(ssep>1)
-            dS=determinant(aux,ssep);
-        else
-            dS=1.0;
-            //dS=(2.0*3.14159265359*2.71828182846*covM[sep[0]][sep[0]]);
+        dS=determinant(aux,ssep);
+        //dS=(2.0*3.14159265359*2.71828182846*covM[sep[0]][sep[0]]);
 
         //separator union v
         for(int c=0;c<ssep;c++)
             aux[ssep][c]=aux[c][ssep]=corrM[sep[c]][v];
         aux[ssep][ssep]=corrM[v][v];
         dSuv=determinant(aux,ssep+1);
-
+        T.wSn=-0.5*log(dSuv);
         //Active Cluster CA
         for(int c=0;c<sCA;c++)
             for(int d=0;d<sCA;d++)
@@ -425,14 +415,11 @@ double TCHULib::getW(int CA, int CD, vector<int> &sep,int v, int ucase)
             aux[sCA][c]=aux[c][sCA]=corrM[tcjt->GetVertex(CA).GetData().nodes[c]][v];
         aux[sCA][sCA]=corrM[v][v];
         dCAv=determinant(aux,sCA+1);
+        T.wCAn=-0.5*log(dCAv);
         for(int c=0;c<=sCA;c++)
-        delete[] aux[c];
-            delete[] aux;
-        if(ssep>1)
-            return (dCA*dSuv)/(dCAv*dS);
-        else
-            return (dCA*dSuv*dS)/(dCAv);
-
+            delete[] aux[c];
+        delete[] aux;
+        T.w=(dCA*dSuv)/(dCAv*dS);
     }
     else
     {
@@ -443,19 +430,11 @@ double TCHULib::getW(int CA, int CD, vector<int> &sep,int v, int ucase)
         double** aux=new double*[ms+1];
         for(int c=0;c<=ms;c++)
             aux[c]=new double[ms+1];
-        if(ssep>1)
-        {
-            //separator
-            for(int c=0;c<ssep;c++)
-                for(int d=0;d<ssep;d++)
-                    aux[c][d]=corrM[sep[c]][sep[d]];
-            dS=determinant(aux,ssep);
-        }
-        else
-        {
-            //dS=(2.0*3.14159265359*2.71828182846*covM[sep[0]][sep[0]]);
-            dS=1.0;
-        }
+        //separator
+        for(int c=0;c<ssep;c++)
+            for(int d=0;d<ssep;d++)
+                aux[c][d]=corrM[sep[c]][sep[d]];
+        dS=determinant(aux,ssep);
 
         //Donor Cluster CD
         for(int c=0;c<sCD;c++)
@@ -494,19 +473,17 @@ double TCHULib::getW(int CA, int CD, vector<int> &sep,int v, int ucase)
             aux[sCA][c]=aux[c][sCA]=corrM[tcjt->GetVertex(CA).GetData().nodes[c]][v];
         aux[sCA][sCA]=corrM[v][v];
         dCAv=determinant(aux,sCA+1);
+        T.wCAn=-0.5*log(dCAv);
         for(int c=0;c<=ms;c++)
-        delete[] aux[c];
-            delete[] aux;
-        if(ssep>1)
-            return (dCA*dCD)/(dCAv*dS);
-        else
-            return (dCA*dCD*dS)/(dCAv);
+            delete[] aux[c];
+        delete[] aux;
+        T.w=(dCA*dCD)/(dCAv*dS);
     }
 }
 
-double TCHULib::getWBUD(vector<int>& sep, int v1, int v2)
+void TCHULib::getWBUD(double &w, double &wS1, double &wS2, double &wC12, vector<int>& sep, int v1, int v2)
 {
-    double dC,dSuv2, dSuv1;
+    double dC,dSuv2, dSuv1, dS;
     int sCA=sep.size()+2, ssep=sep.size();
     double** aux=new double*[sCA];
     for(int c=0;c<sCA;c++)
@@ -515,16 +492,19 @@ double TCHULib::getWBUD(vector<int>& sep, int v1, int v2)
     for(int c=0;c<ssep;c++)
             for(int d=0;d<ssep;d++)
                 aux[c][d]=corrM[sep[c]][sep[d]];
+    dS = determinant(aux,ssep);
     //separator union v1
     for(int c=0;c<ssep;c++)
         aux[ssep][c]=aux[c][ssep]=corrM[sep[c]][v1];
     aux[ssep][ssep]=corrM[v1][v1];
     dSuv1=determinant(aux,ssep+1);
+    wS1=-0.5*log(dSuv1);
     //separator union v1
     for(int c=0;c<ssep;c++)
         aux[ssep][c]=aux[c][ssep]=corrM[sep[c]][v2];
     aux[ssep][ssep]=corrM[v2][v2];
     dSuv2=determinant(aux,ssep+1);
+    wS2=-0.5*log(dSuv2);
 
     //New Cluster
     for(int c=0;c<ssep;c++)
@@ -532,8 +512,8 @@ double TCHULib::getWBUD(vector<int>& sep, int v1, int v2)
     aux[ssep+1][ssep]=aux[ssep][ssep+1]=corrM[v2][v1];
     aux[ssep+1][ssep+1]=corrM[v2][v2];
     dC=determinant(aux,ssep+2);
-
-    if((dSuv1*dSuv2)/dC<-1e40)
+    wC12=-0.5*log(dC);
+    if((dSuv1*dSuv2)/(dC*dS)<-1e40)
     {
         dC=0.0;
         for(int c=0;c<n;c++)
@@ -608,20 +588,19 @@ double TCHULib::getWBUD(vector<int>& sep, int v1, int v2)
 
     }
 
-
     for(int c=0;c<sCA;c++)
     delete[] aux[c];
         delete[] aux;
-
-
-    return (dSuv1*dSuv2)/dC;
+    w=(dSuv1*dSuv2)/(dC*dS);
 }
 
 
 void TCHULib::clean()
 {
     aux= new Graph<Cherry,Separator>(true);
+    weight=0.0;
     vector<int> m(tcjt->VertexCount(),-1);   ///vector for mapping clusters from the constructed cherry tree to the new and clean
+    double maxWCluster = 0.0;
     for(int c=0;c<tcjt->VertexCount();c++)
     {
         if(tcjt->GetVertexData(c).exists)
@@ -630,9 +609,17 @@ void TCHULib::clean()
             cn.active=cn.exists=true;
             for(int n : tcjt->GetVertexData(c).nodes)
                 cn.nodes.push_back(n);
+            cn.weight=tcjt->GetVertexData(c).weight;
+            weight+=cn.weight;
             m[tcjt->GetVertex(c).GetID()]=aux->AddVertex(cn);
+            if (cn.weight>maxWCluster)
+            {
+                maxWCluster = cn.weight;
+                root = m[tcjt->GetVertex(c).GetID()];
+            }
         }
     }
+    //cout<<"Suma de Peso de clusters:"<<weight<<endl;
     for(int c=0;c<tcjt->VertexCount();c++)
     {
         if(tcjt->GetVertexData(c).exists)
@@ -656,10 +643,14 @@ void TCHULib::clean()
                         Getdonating_V_ariable(c,ev,s.GetDestID());
                         as.dVA=ev[1];
                     }
+                    as.weight=s.GetData().weight;
+                    weight-=(as.weight/2.0);
                     aux->AddEdge(m[c],m[s.GetDestID()],as,0.0,false);
                 }
     }
-    root=m[root];
+    //root=m[root];
+    if (root<0)
+        cout<<"Mala raiz: " <<root<<endl;
     delete tcjt;
     tcjt=aux;
     aux=nullptr;
@@ -727,10 +718,66 @@ ostream & operator<<(ostream & out, TCHULib & g)
     return out;
 }
 
+void TCHULib::Print2File(int gen, int fun, int d, int k)
+{
+   //get the filename
+    /*string path = "/home/tizo/rClassicEDA/graphs";
+    int maxID = 0;
+    DIR *dir;
+    struct dirent *DirEntry;
+    dir = opendir(path.c_str());
+
+    while(DirEntry=readdir(dir))
+    {
+        string file = DirEntry->d_name;
+        string strid = file.replace(file.begin(),file.begin()+1,"");
+        char* p=0;
+        strtol(strid.c_str(), &p, 10);
+        if(!*p)
+            if (maxID<atoi(strid.c_str()))
+                maxID = atoi(strid.c_str());
+    }
+    closedir(dir);*/
+
+    ofstream myfile;
+    myfile.open ("/home/tizo/rClassicEDA/graphs/C" + to_string(d) + "_" + to_string(k) + "_" + to_string(fun) + "_" + to_string(gen));
+    myfile<<"cluster,label,w_s"<<endl;
+    for(int c=0;c<tcjt->VertexCount();c++)
+    {
+        if(tcjt->GetVertex(c).GetData().exists)
+        {
+            myfile<<"C_"<<tcjt->GetVertex(c).GetID()<<",{";
+            for (int d : tcjt->GetVertex(c).GetData().nodes)
+                myfile << d << " ";
+            myfile<<"},"<<tcjt->GetVertex(c).GetData().weight<<"\n";
+        }
+
+    }
+    myfile.close();
+
+    myfile.open ("/home/tizo/rClassicEDA/graphs/S" + to_string(d) + "_" + to_string(k) + "_" + to_string(fun) + "_" + to_string(gen));
+    myfile<<"from,to,label,w_s"<<endl;
+    for(int c=0;c<tcjt->VertexCount();c++)
+    {
+        if(tcjt->GetVertex(c).GetData().exists)
+        {
+            Vertex<Cherry,Separator> v=tcjt->GetVertex(c);
+            for (OutEdge<Separator> e : v.GetOutgoingEdges())
+            {
+                myfile << "C_" << v.GetID() << ",C_";
+                myfile << tcjt->GetVertex(e.GetDestID()).GetID()<<",{";
+                for (int nod : e.GetData().nodes)
+                    myfile << " " << nod;
+                myfile<<"},"<<e.GetData().weight<<endl;
+            }
+        }
+    }
+    myfile.close();
+}
 
 void TCHULib::Print(ostream & out)
 {
-    out << "Cherrys: \n";
+    out << "W= "<<getWeight()<<endl<<"Clusters: \n";
     for(int c=0;c<tcjt->VertexCount();c++)
     {
         if(tcjt->GetVertex(c).GetData().exists)
@@ -738,7 +785,7 @@ void TCHULib::Print(ostream & out)
             out<<"# "<<tcjt->GetVertex(c).GetID()<<":( ";
             for (int d : tcjt->GetVertex(c).GetData().nodes)
                 out << d << " ";
-            out<<")\n";
+            out<<"), W= "<<tcjt->GetVertex(c).GetData().weight<<"\n";
         }
 
     }

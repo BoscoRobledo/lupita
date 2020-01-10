@@ -1,37 +1,28 @@
 #include <iostream>
 #include <iomanip>
-#include "Simulate.h"
-#include "PrecMatrix.h"
+//#include "sampling/Sampler.h"
+#include "GN/PrecMatrix.h"
 using namespace std;
 typedef void (*Wfun)(double**,double**,double**,double*,int, int);
 int main()
 {
     int D; //dimension of the problem
-    int order;   //order of statistics used in the tree probability approx (1. All variables are independent, 2. Chow & Liu Tree, 3. 3-t-CherryJunctionTree )
+    int order;   //order of graph structure used in the tree probability approx (1. All variables are independent, 2. Chow & Liu Tree, 3. 3-t-CherryJunctionTree )
 
     cin>>D>>order;
     double *mu=new double[D];
     double **covM=new double*[D];               /* Population Covariance Matrix */
     double **corrM=new double*[D];               /* Population Correlation Matrix */
-    double **perms=new double*[order];
-    double ***W=new double**[order];
-    for(int c=0;c<order;c++)
+    double *perm=new double[D];
+    double **W=new double*[D];
+    for(int c=0;c<D;c++)
     {
-        perms[c]=new double[D];
-        W[c]=new double*[D];
-        for(int d=0;d<D;d++)
-        {
-            W[c][d]=new double[D];
-            for(int e=0;e<D;e++)
-                W[c][d][e]=0.0;
-        }
-    }
-    for(int c=0;c<D;c++)                        /* Graph Precision Matrices for each order array*/
-    {
+        W[c]=new double[D];
         covM[c]=new double[D];
-        corrM[c]=new double[D];                /* Graph Precision Matrices for each order array*/
+        corrM[c]=new double[D];
+        for(int d=0;d<D;d++)
+            W[c][d]=0.0;
     }
-
     for(int c=0;c<D;c++)
         cin>>mu[c];
 
@@ -42,9 +33,32 @@ int main()
     for(int c=0;c<D;c++)
         for(int d=0;d<D;d++)
             cin>>corrM[c][d];
+    for(int c=0;c<D;c++)
+    {
+        for(int d=0;d<D;d++)
+            cout<<setprecision(12)<<setw(15)<<covM[c][d]<<" ";
+        cout<<endl;
+    }
+    cout<<"Correlación"<<endl;
+    for(int c=0;c<D;c++)
+    {
+        for(int d=0;d<D;d++)
+            cout<<setprecision(12)<<setw(15)<<corrM[c][d]<<" ";
+        cout<<endl;
+    }
 
-    for(int c=1;c<order;c++)
-        getW(W[c],covM,corrM,perms[c],D,c+1);
+
+    getW(W,covM,corrM,perm,D,2);
+
+    for(int c=0;c<D;c++)
+        cout<<perm[c]<<" ";
+    cout<<endl;
+    for(int c=0;c<D;c++)
+    {
+        for(int d=0;d<D;d++)
+            cout<<setprecision(12)<<setw(15)<<W[c][d]<<" ";
+        cout<<endl;
+    }
     return 0;
 }
 

@@ -2,6 +2,16 @@
 #define TCHULIB_H_INCLUDED
 #include "Graph.h"
 #include "TCHLib.h"
+struct ScTableRow{
+    double w;
+    int d;
+    vector<int> sep;
+    inline bool operator<(const ScTableRow& comp) const
+    {
+        return w > comp.w;
+    }
+};
+
 struct UTableRow{
     double w;
     double wCAn;

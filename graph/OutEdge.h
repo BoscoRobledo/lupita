@@ -4,7 +4,7 @@ template <typename eD>
 class OutEdge
 {
     public:
-        OutEdge(int end_id, double cost, eD _data): dest_id(end_id), cost(cost), data(_data) {}
+        OutEdge(int end_id, double cost, eD _data): dest_id(end_id), data(_data) {}
         const int GetDestID() const;
         const double GetCost() const;
         eD & GetData();
@@ -18,12 +18,6 @@ template <typename eD>
 const int OutEdge<eD>::GetDestID() const
 {
     return dest_id;
-}
-
-template <typename eD>
-const double OutEdge<eD>::GetCost() const
-{
-    return cost;
 }
 
 template <typename eD>

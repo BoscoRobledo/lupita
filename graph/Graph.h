@@ -11,41 +11,43 @@
 #include <queue>
 #include <stack>
 #include <algorithm>
+#include <iostream>
+
 using namespace std;
 template <typename vD, typename eD>
 class Graph
 {
     private:
         vector<Vertex<vD,eD>> vertices;
-        const bool directed;
+        const bool isDirected;
+        const bool allowRepeatedEdges;
 
-        void DepthFirstSearchRecursive(int vertex_id, vector<int> & visit_order,vector<bool> & visited);
+        void DepthFirstSearchRecursive(int vertex_id, vector<int> & visit_order, vector<bool> & visited);
         void Print(ostream & out);
-        void fillDAGDFSR(int vertex_id, vector<bool> &visited,Graph<vD,eD> &source);
+        void fillDAGDFSR(int vertex_id, vector<bool> &visited, Graph<vD,eD> &source);
 
     public:
-        Graph(bool directed = false) : directed(directed) {}                            //Graph construction
+        //Graph construction
+        Graph(bool isDirected = false, bool allowRepeatedEdges = false) : isDirected(isDirected), allowRepeatedEdges(allowRepeatedEdges) {}
         int AddVertex(vD value);
-        bool EdgeExists(int start_id, int end_id, double cost);
-        void AddEdge(int start_id, int end_id, eD edata, double cost = 0.0,bool repeat=true);
+        bool EdgeExists(int start_id, int end_id);
+        void AddEdge(int start_id, int end_id, eD edata, bool repeat=true);
 
-
-
+        //Graph querying
         int VertexCount() const;
-        vD & GetVertexData(int vertex_id);                              //Graph querying
+        vD & GetVertexData(int vertex_id);
         Vertex<vD,eD> & GetVertex(int vertex_id);
         vector<int> GetAllVertexIDs() const;
         vector<Edge> getEdgeList(bool ordered = false);
 
+        //Graph traversal
+        vector<int> DepthFirstSearch(int start_id);
 
-        vector<int> DepthFirstSearch(int start_id);                           //Graph traversal
-
-
-
-        Edge fillMSTFromGraph(Graph<vD,eD>& source);                                //Fill the graph from another one
+        //Fill the graph from another one
+        Edge fillMSTFromGraph(Graph<vD,eD>& source);
         void fillDAG(int start_id,Graph<vD,eD> &source);
 
-
+        //Graph output
         template <typename U,typename V>
         friend ostream & operator<<(ostream & out, Graph<U,V> & g);
 
@@ -57,35 +59,37 @@ class Graph
 template <typename vD, typename eD>
 int Graph<vD, eD>::AddVertex(vD value)
 {
-    int id = VertexCount(); // id is the index into vertices array
+    int id = VertexCount();
     vertices.push_back(Vertex<vD, eD>(id, value));
     return id;
 }
 
 template <typename vD, typename eD>
-bool Graph<vD, eD>::EdgeExists(int start_id, int end_id, double cost)
+bool Graph<vD, eD>::EdgeExists(int start_id, int end_id)
 {
     for (OutEdge<eD> e : vertices[start_id].GetOutgoingEdges())
-        if(e.GetDestID()==end_id && e.GetCost()==cost)
+        if(e.GetDestID()==end_id)
             return true;
     return false;
 }
+
 template <typename vD, typename eD>
-void Graph<vD, eD>::AddEdge(int start_id, int end_id, eD edata, double cost, bool repeat)
+void Graph<vD, eD>::AddEdge(int start_id, int end_id, eD edata, bool repeat)
 {
     if(!(start_id >= 0 && start_id < VertexCount()) || !(end_id >= 0 && end_id < VertexCount()))
         start_id=end_id;
     assert(start_id >= 0 && start_id < VertexCount());
     assert(end_id >= 0 && end_id < VertexCount());
     if(!repeat)
-        if(EdgeExists(start_id,end_id,cost))
+        if(EdgeExists(start_id,end_id))
            return;
-    vertices[start_id].AddOutgoingEdge(end_id, cost, edata);
-    vertices[end_id].AddIngoingEdge(start_id, cost, edata);
-    if (!directed)
+    vertices[start_id].AddOutgoingEdge(end_id, edata);
+    vertices[end_id].AddIngoingEdge(start_id, edata);
+    //Edges are copied in reverse direction for undirected graphs
+    if (!isDirected)
     {
-        vertices[end_id].AddOutgoingEdge(start_id, cost, edata);
-        vertices[start_id].AddIngoingEdge(end_id, cost, edata);
+        vertices[end_id].AddOutgoingEdge(start_id, edata);
+        vertices[start_id].AddIngoingEdge(end_id, edata);
     }
 }
 
@@ -101,7 +105,7 @@ int Graph<vD, eD>::VertexCount() const
 }
 
 template <typename vD, typename eD>
- vD & Graph<vD, eD>::GetVertexData(int vertex_id)
+vD & Graph<vD, eD>::GetVertexData(int vertex_id)
 {
     return vertices[vertex_id].GetData();
 }
@@ -117,7 +121,7 @@ vector<int> Graph<vD, eD>::GetAllVertexIDs() const
 {
     vector<int> vertex_ids(VertexCount());
     for (size_t i = 0; i < vertex_ids.size(); ++i)
-        vertex_ids[i] = i;
+        vertex_ids[i] = vertices[i].GetID();
     return vertex_ids;
 }
 
@@ -127,11 +131,11 @@ vector<Edge> Graph<vD, eD>::getEdgeList(bool ordered)
 {
     vector<Edge> lst;
     for (Vertex<vD, eD> v : vertices)
-    for (OutEdge<eD> e : v.GetOutgoingEdges())
-    {
-        Edge ed(v.GetID(),e.GetDestID(),e.GetCost());
-        lst.push_back(ed);
-    }
+      for (OutEdge<eD> e : v.GetOutgoingEdges())
+      {
+          Edge ed(v.GetID(),e.GetDestID();
+          lst.push_back(ed);
+      }
     if(ordered)
         sort(lst.begin(),lst.end());
     return lst;
@@ -201,16 +205,16 @@ Edge Graph<vD, eD>::fillMSTFromGraph(Graph<vD, eD> &source)
     for (Vertex<vD, eD> v : source.vertices)
         AddVertex(v.GetData());
     UFDS UF(VertexCount());
+    int cont=0;
     for (unsigned int i=0;i<l.size();i++)
     {
         Edge e = l[i];
-        int cont=0;
         if (!UF.isSameSet(e.GetStartID(), e.GetDestID()))
         {
             AddEdge(e.GetStartID(),e.GetDestID(),e.GetCost(),false);
             UF.unionSet(e.GetStartID(), e.GetDestID());
             cont++;
-            if(cont==(VertexCount()-1))
+            if(cont==VertexCount()-1)
                 return l[0];
         }
     }

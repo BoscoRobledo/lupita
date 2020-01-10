@@ -1,0 +1,59 @@
+# depslib dependency file v1.0
+1554597225 source:/home/tizo/Dropbox/CIMAT/Semestre4/tChTGN/building/undirectedModel/ChLT/ChLT.cpp
+	"ChLT.h"
+
+1554903120 /home/tizo/Dropbox/CIMAT/Semestre4/tChTGN/building/undirectedModel/ChLT/ChLT.h
+	"../../../graph/Graph.h"
+	"../UndirectedModel.h"
+
+1554903134 /home/tizo/Dropbox/CIMAT/Semestre4/tChTGN/graph/Graph.h
+	"Vertex.h"
+	"OutEdge.h"
+	"Edge.h"
+	"UFDS.h"
+	<utility>
+	<ostream>
+	<vector>
+	<cassert>
+	<queue>
+	<stack>
+	<algorithm>
+	<iostream>
+
+1502914422 /home/tizo/Dropbox/CIMAT/Semestre4/tChTGN/graph/Vertex.h
+	"OutEdge.h"
+	"InEdge.h"
+	<utility>
+	<ostream>
+	<vector>
+
+1502914422 /home/tizo/Dropbox/CIMAT/Semestre4/tChTGN/graph/OutEdge.h
+
+1502914357 /home/tizo/Dropbox/CIMAT/Semestre4/tChTGN/graph/InEdge.h
+
+1502907302 /home/tizo/Dropbox/CIMAT/Semestre4/tChTGN/graph/Edge.h
+
+1500056850 /home/tizo/Dropbox/CIMAT/Semestre4/tChTGN/graph/UFDS.h
+
+1554599156 /home/tizo/Dropbox/CIMAT/Semestre4/tChTGN/building/undirectedModel/UndirectedModel.h
+	"../../graph/Graph.h"
+
+1554599115 source:/home/tizo/Dropbox/CIMAT/Semestre4/tChTGN/building/undirectedModel/UndirectedModel.cpp
+	"UndirectedModel.h"
+
+1554902878 source:/home/tizo/Dropbox/CIMAT/Semestre4/tChTGN/GN/PrecMatrix.cpp
+	"PrecMatrix.h"
+	"../graph/Graph.h"
+	"../building/undirectedModel/ChLT/ChLT.h"
+	<iomanip>
+
+1508265178 /home/tizo/Dropbox/CIMAT/Semestre4/tChTGN/GN/PrecMatrix.h
+
+1502910303 source:/home/tizo/Dropbox/CIMAT/Semestre4/tChTGN/graph/Edge.cpp
+	"Edge.h"
+
+1554902870 source:/home/tizo/Dropbox/CIMAT/Semestre4/tChTGN/main.cpp
+	<iostream>
+	<iomanip>
+	"GN/PrecMatrix.h"
+
