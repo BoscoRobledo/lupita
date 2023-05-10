@@ -2,10 +2,19 @@
 #define CHLT_HPP_INCLUDED
 #include "../../../graph/Graph.h"
 #include "../UndirectedModel.h"
-class ChLT : public UndirectedModel
+
+/*
+ * Class for fitting gaussian model in an Chow&Liu Tree
+ * Juan Bosco Robledo Muñoz - 2017
+ */
+class ChowLiuTree : public UndirectedModel
 {
     public:
-        ChLT(double** corrM, double** covM, int d): UndirectedModel(corrM,covM,d,0){}
+        ChowLiuTree(double** corrM, double** covM, int d): UndirectedModel(corrM,covM,d,2){}
+
+        /*
+         * Builds the Chow&Liu Tree
+         */
         void build()
         {
             Graph<int,double> aux(false);
@@ -20,18 +29,12 @@ class ChLT : public UndirectedModel
 
             //Get MST from the auxiliar graph previously constructed.
             Edge<double> mx=structure.FillMWST(aux);
+
+            //Set Main Vertex to min variance vertex in max correlation pair.
             if(covM[mx.GetOriginID()][mx.GetOriginID()]<=covM[mx.GetDestinationID()][mx.GetDestinationID()])
-              bestV=mx.GetOriginID();
+              mainV=mx.GetOriginID();
             else
-              bestV=mx.GetDestinationID();
-            k=2;
-        }
-
-        friend ostream & operator<<(ostream & out, ChLT & g)
-        {
-
-            out<<"Best Vertex="<<g.getBestVertex()<<endl<<g.structure;
-            return out;
+              mainV=mx.GetDestinationID();
         }
 };
 
