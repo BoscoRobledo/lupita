@@ -1,7 +1,6 @@
 #ifndef VERTEX_HPP_INCLUDED
 #define VERTEX_HPP_INCLUDED
-#include "OutEdge.h"
-#include "InEdge.h"
+#include "Edge.h"
 #include <utility>
 #include <ostream>
 #include <vector>
@@ -11,31 +10,31 @@ class Vertex
 {
     public:
         Vertex(int id, vD value): id(id), data(value) {}
-        void AddOutgoingEdge(int end_id, eD edata);
+        void AddOutgoingEdge(int destination_id, eD edata);
         void AddIngoingEdge(int origin_id, eD edata);
         const int GetID() const;
 
         vD & GetData();
-        vector<OutEdge<eD>> & GetOutgoingEdges();
-        vector<InEdge<eD>> & GetIngoingEdges();
+        vector<Edge<eD>> & GetOutgoingEdges();
+        vector<Edge<eD>> & GetIngoingEdges();
 
     private:
         int id; // unique identifier
         vD data;
-        vector<OutEdge<eD>> outgoing_edges;
-        vector<InEdge<eD>> ingoing_edges;
+        vector<Edge<eD>> outgoing_edges;
+        vector<Edge<eD>> ingoing_edges;
 };
 
 template <typename vD, typename eD>
-void Vertex<vD,eD>::AddOutgoingEdge(int end_id, eD edata)
+void Vertex<vD,eD>::AddOutgoingEdge(int destination_id, eD edata)
 {
-    outgoing_edges.push_back(OutEdge<eD>(end_id, edata));
+    outgoing_edges.push_back(Edge<eD>(id, destination_id, edata));
 }
 
 template <typename vD, typename eD>
 void Vertex<vD,eD>::AddIngoingEdge(int origin_id, eD edata)
 {
-    ingoing_edges.push_back(InEdge<eD>(origin_id, edata));
+    ingoing_edges.push_back(Edge<eD>(origin_id, id, edata));
 }
 
 template <typename vD, typename eD>
@@ -51,13 +50,13 @@ const int Vertex<vD,eD>::GetID() const
 }
 
 template <typename vD, typename eD>
-vector<OutEdge<eD>> & Vertex<vD,eD>::GetOutgoingEdges()
+vector<Edge<eD>> & Vertex<vD,eD>::GetOutgoingEdges()
 {
     return outgoing_edges;
 }
 
 template <typename vD, typename eD>
-vector<InEdge<eD>> & Vertex<vD,eD>::GetIngoingEdges()
+vector<Edge<eD>> & Vertex<vD,eD>::GetIngoingEdges()
 {
     return ingoing_edges;
 }

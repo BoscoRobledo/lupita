@@ -1,27 +1,6 @@
-#include "PrecMatrix.h"
-#include "../graph/Graph.h"
-#include "../building/undirectedModel/ChLT/ChLT.h"
 #include <iomanip>
-
-void vectorSqMatrixProduct(double* x,double** A,int n, double* b)
-{
-    for(int c=0;c<n;c++)
-    {
-        b[c]=0;
-        for(int d=0;d<n;d++)
-            b[c]+=x[d]*A[d][c];
-    }
-}
-
-double vectorDotProduct(double* x, double* y, int n)
-{
-    double res=0.0;
-    for(int c=0;c<n;c++)
-        res+=x[c]*y[c];
-    return res;
-}
-
-
+#include "Matrix.h"
+#include "PrecisionMatrix.h"
 
 void recursiveW(double** W,double** covM, const int n, int* perm)
 {

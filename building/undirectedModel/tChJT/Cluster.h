@@ -1,9 +1,12 @@
-#ifndef SC_CLUSTER_H_INCLUDED
-#define SC_CLUSTER_H_INCLUDED
+#ifndef CLUSTER_H_INCLUDED
+#define CLUSTER_H_INCLUDED
 struct Cluster{
     vector<int> nodes;
-    bool active;
-    bool exists;
+    bool updated;
+    bool deleted;
     double weight;
+    double diffEntropy;
+    /*vector<double*> corrMCholDec;
+    vector<double*> covMCholDec;*/
 };
 #endif

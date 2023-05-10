@@ -1,14 +1,40 @@
 #ifndef EDGE_HPP_INCLUDED
 #define EDGE_HPP_INCLUDED
+template <typename eD>
 class Edge
 {
     public:
-        Edge() {}
-        Edge(int start_id, int end_id, double cost): dest_id(end_id), start_id(start_id) {}
-        const int GetDestID() const;
-        const int GetStartID() const;
+        Edge(int o_id, int d_id, eD _data): origin_id(o_id), destination_id(d_id), data(_data) {}
+        const int GetOriginID() const;
+        const int GetDestinationID() const;
+        eD & GetData();
     private:
-        int dest_id;
-        int start_id;
+        int origin_id;
+        int destination_id;
+        eD data;
 };
-#endif // EDGELIST_HPP_INCLUDED
+
+template <typename eD>
+const int Edge<eD>::GetOriginID() const
+{
+    return origin_id;
+}
+
+template <typename eD>
+const int Edge<eD>::GetDestinationID() const
+{
+    return destination_id;
+}
+
+template <typename eD>
+eD & Edge<eD>::GetData()
+{
+    return data;
+}
+
+template <typename eD>
+bool operator<(Edge<eD>& leftValue,Edge<eD>& rightValue)
+{
+    return leftValue.GetData()<rightValue.GetData();
+}
+#endif // EDGE_HPP_INCLUDED

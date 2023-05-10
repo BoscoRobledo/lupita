@@ -13,7 +13,7 @@ class UndirectedModel
         double** getcovM();
         double** getcorrM();
         friend ostream & operator<<(ostream & out, UndirectedModel & g);
-        Graph<int,int> structure;
+        Graph<int,double> structure;
 
     protected:
         int k,d,bestV;

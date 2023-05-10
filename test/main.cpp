@@ -1,7 +1,9 @@
 #include <iostream>
 #include <iomanip>
 //#include "sampling/Sampler.h"
-#include "GN/PrecMatrix.h"
+//#include "GN/PrecMatrix.h"
+#include "building/undirectedModel/ChLT/ChLT.h"
+#include "building/undirectedModel/tChJT/tChJT.h"
 using namespace std;
 typedef void (*Wfun)(double**,double**,double**,double*,int, int);
 int main()
@@ -47,8 +49,23 @@ int main()
         cout<<endl;
     }
 
+    ChLT chowLiuTree(corrM,covM,D);
+    chowLiuTree.build();
 
-    getW(W,covM,corrM,perm,D,2);
+    cout<<"Construccion de Chow Liu tree"<<endl<<chowLiuTree;
+
+    tChJT tchjtbase(&chowLiuTree,corrM,covM,D);
+    tchjtbase.build(2);
+    cout<<"Construccion de tCherry Junction Tree k=2 desde chow&liu tree"<<endl<<tchjtbase;
+
+    tChJT tchjt(corrM,covM,D);
+    tchjt.build(2);
+    cout<<"Construccion de tCherry Junction Tree k=2"<<endl<<tchjt;
+    tchjt.increaseOrder();
+    cout<<"Actualizacion de orden k=3"<<endl<<tchjt;
+
+
+    //getW(W,covM,corrM,perm,D,2);
 
     for(int c=0;c<D;c++)
         cout<<perm[c]<<" ";

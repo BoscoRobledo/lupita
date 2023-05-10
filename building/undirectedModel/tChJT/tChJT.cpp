@@ -1,54 +1,61 @@
-#include "Graph.h"
-#include "Determinant.h"
-#include "TCHULib.h"
-
+#include "../../../graph/Graph.h"
+#include "tChJT.h"
+#include "DeterminantCalculator.h"
 #include <queue>
 #include <iostream>
 #include <fstream>
 #include <dirent.h>
 
-double TCHULib::getWeight()
+///-----Properties
+double tChJT::getWeight()
 {
     return weight;
 }
-const int TCHULib::getRoot() const
-{
-    return root;
-}
 
-const vector<int>& TCHULib::getPerm() const
+double tChJT::getModelDifferentialEntropy()
 {
-    return perm;
+    return diffEntropy;
 }
-double** TCHULib::getcovM()
-{
-    return covM;
-}
-double** TCHULib::getcorrM()
-{
-    return corrM;
-}
-Graph<int,int>* TCHULib::getDAG()
-{
-    return DAG;
-}
-
-Graph<Cherry,Separator>* TCHULib::getTCHJT()
-{
-    return tcjt;
-}
-
 
 ///-----Properties
 
-///-----Construction from 2 tCherry Junction Tree (Chow&Liu Tree)
+///ctor - dtor
 
-void TCHULib::Getdonating_V_ariable(int CD, vector<int> &s, int CA)
+void tChJT::initVars()
 {
-    for (int vD : tcjt->GetVertexData(CD).nodes)
+    weight=0.0;
+    diffEntropy=0.0;
+    k=0;
+}
+
+
+tChJT::tChJT(ChLT* chowLiuTree, double** corrM, double** covM, int d) : UndirectedModel(corrM,covM,d,0), baseModel(chowLiuTree)
+{
+    initVars();
+}
+
+tChJT::tChJT(double** corrM, double** covM, int d) : UndirectedModel(corrM,covM,d,0)
+{
+    initVars();
+    baseModel=new ChLT(corrM,covM,d);
+    baseModel->build();
+}
+
+tChJT::~tChJT()
+{
+}
+
+///ctor - dtor
+
+
+///-----Construction of t=2 Cherry Junction Tree from a Chow&Liu Tree
+
+void tChJT::Getdonating_V_ariable(int CD, vector<int> &s, int CA)
+{
+    for (int vD : tchjt.GetVertexData(CD).nodes)
     {
         bool exists=false;
-        for (int vS : tcjt->GetVertexData(CA).nodes)
+        for (int vS : tchjt.GetVertexData(CA).nodes)
             if(vS==vD)
             {
                 exists=true;
@@ -58,196 +65,301 @@ void TCHULib::Getdonating_V_ariable(int CD, vector<int> &s, int CA)
             s.push_back(vD);
     }
 }
-/*
-void TCHULib::Get_D_ominatingVertex(int CA, vector<int> &s, int CD)
-{
-    for (int vA : tcjt->GetVertexData(CA).nodes)
-    {
-        bool exists=false;
-        for (int vS : tcjt->GetVertexData(CD).nodes)
-            if(vS==vA)
-            {
-                exists=true;
-                break;
-            }
-        if(!exists)
-            s.push_back(vA);
-    }
-}*/
 
-
-
-void TCHULib::DFSCHLT(int vertex_id, vector<bool> & visited, Graph<int,int>& CHLT, bool root, int parentCluster)
+void tChJT::DFSChLT(int vertex_id, vector<bool> & visited, bool root, int parent_cluster)
 {
     visited[vertex_id] = true;
-    for (OutEdge<int> e : CHLT.GetVertex(vertex_id).GetOutgoingEdges())
+    for (Edge<double> e : baseModel->structure.GetVertex(vertex_id).GetOutgoingEdges())
     {
-        int neighbor_id = e.GetDestID();
+        int neighbor_id = e.GetDestinationID();
         if (!visited[neighbor_id])
         {
-            Cherry cl;
+            Cluster cl;
             cl.nodes.push_back(vertex_id);
             cl.nodes.push_back(neighbor_id);
-            cl.active=cl.exists=true;
+            cl.deleted=false;
+            cl.updated=false;
             cl.weight=-0.5*log(1.0-corrM[vertex_id][neighbor_id]*corrM[vertex_id][neighbor_id]);
+            cl.diffEntropy=0.5*log(2.0*M_PI*M_E*2.0*M_PI*M_E*(covM[vertex_id][vertex_id]*covM[neighbor_id][neighbor_id]-covM[vertex_id][neighbor_id]*covM[neighbor_id][vertex_id]));
             weight+=cl.weight;
-            int id=tcjt->AddVertex(cl);
+            diffEntropy+=cl.diffEntropy;
+            int cluster_id=tchjt.AddVertex(cl);
             if(!root)
             {
+                //create edges in both ways
                 Separator s,s2;
                 s.nodes.push_back(vertex_id);
                 s2.nodes.push_back(vertex_id);
-                Getdonating_V_ariable(id,s.v, parentCluster);
-                Getdonating_V_ariable(parentCluster,s2.v,id);
-                s.dVA=s2.v[0];
-                s2.dVA=s.v[0];
+                //select proper Xv in forward separator
+                if(vertex_id==tchjt.GetVertexData(parent_cluster).nodes[0])
+                    s.Xv.push_back(tchjt.GetVertexData(parent_cluster).nodes[1]);
+                else
+                    s.Xv.push_back(tchjt.GetVertexData(parent_cluster).nodes[0]);
+                s2.Xv.push_back(neighbor_id);
+                s.Xu=s2.Xv[0];
+                s2.Xu=s.Xv[0];
+
+                //initialization of weight-determinant calculation variables
+                double* mrow=new double[1];
+                s.corrMCholDec.push_back(mrow);
+                s2.corrMCholDec.push_back(mrow);
+                mrow=new double[1];
+                s.covMCholDec.push_back(mrow);
+                s2.covMCholDec.push_back(mrow);
+                s.corrMCholDec[0][0]=sqrt(corrM[vertex_id][vertex_id]);
+                s.covMCholDec[0][0]=sqrt(covM[vertex_id][vertex_id]);
+                s.corrMDet=corrM[vertex_id][vertex_id];
+                s.covMDet=covM[vertex_id][vertex_id];
+                s.diffEntropy=s2.diffEntropy=0.0;
                 s.complete=s2.complete=true;
                 s.weight=s2.weight=0.0;
-                tcjt->AddEdge(parentCluster,id,s);
-                tcjt->AddEdge(id,parentCluster,s2);
+
+
+                tchjt.AddEdge(parent_cluster,cluster_id,s);
+                tchjt.AddEdge(cluster_id,parent_cluster,s2);
             }
             else
-                parentCluster=id;
+            {
+                parent_cluster=cluster_id;
+                bestV=cluster_id;
+            }
             root=false;
-            DFSCHLT(neighbor_id,visited, CHLT,false,id);
+            DFSChLT(neighbor_id,visited,false,cluster_id);
         }
     }
 }
 
-
-TCHULib::TCHULib(Graph<int, int>& CHLT, int initNode, double** correlation, double** covariance, bool doDAG)
+void tChJT::build(int _k)
 {
-    k=2;
-    n=CHLT.VertexCount();
-    corrM=correlation;
-    covM=covariance;
-    root=0;
-    tcjt= new Graph<Cherry,Separator>(true);
-    DAG=new Graph<int,int>(true);
-    vector<bool> visited(CHLT.VertexCount(),false);
-    weight=0.0;
-    DFSCHLT(initNode,visited,CHLT,true,-1);
-    if(doDAG)
-        buildDAG();
+    vector<bool> visited(d,false);
+    DFSChLT(baseModel->getBestVertex(),visited,true,-1);
+    k=baseModel->getOrder();
+    for(int kappa=3;kappa<=k;kappa++)
+        increaseOrder();
+
 }
 
-
-TCHULib::~TCHULib()
-{
-    delete tcjt;
-    delete DAG;
-}
 
 ///-----Construction from 2 tCherry Junction Tree (Chow&Liu Tree)
 
+
 ///-----Order Update
 
-
-bool TCHULib::isValid(UTableRow& T)
+//Equation 10 implementation
+void tChJT::setW(PotentialUpdate &gamma,Edge<Separator>& e)
 {
-    if(!(tcjt->GetVertex(T.CA).GetData().active) || !(tcjt->GetVertex(T.CD).GetData().exists))    ///If donor cluster does not exist or active cluster has already k+1 vars, continue
+    vector<int> nodes;
+    //ToDo: This can be done in O(1)
+    gamma.corrMCholDec.assign(e.GetData().corrMCholDec.begin(),e.GetData().corrMCholDec.end());
+    gamma.covMCholDec.assign(e.GetData().covMCholDec.begin(),e.GetData().covMCholDec.end());
+    nodes.assign(e.GetData().nodes.begin(),e.GetData().nodes.end());
+
+    //this section makes this function O(k^2) complexity
+        //Lambda_S_ij U X_u
+    gamma.corrMCholDec.push_back(new double[k]);
+    gamma.covMCholDec.push_back(new double[k]);
+    int nodes_size=k-1;
+    nodes.push_back(gamma.Xu);
+    for(int j=0;j<=nodes_size;j++)
+    {
+        double sumCorr=0.0, sumCov=0.0;
+        for (int i=0;i<j;i++)
+        {
+            sumCorr += gamma.corrMCholDec[nodes_size][i] * gamma.corrMCholDec[j][i];
+            sumCov += gamma.covMCholDec[nodes_size][i] * gamma.covMCholDec[j][i];
+        }
+        gamma.corrMCholDec[nodes_size][j]=(nodes_size==j)?sqrt(corrM[nodes[nodes_size]][nodes[nodes_size]]-sumCorr):((1.0/gamma.corrMCholDec[j][j])*(corrM[nodes[nodes_size]][nodes[j]]-sumCorr));
+        gamma.covMCholDec[nodes_size][j]=(nodes_size==j)?sqrt(covM[nodes[nodes_size]][nodes[nodes_size]]-sumCov):((1.0/gamma.covMCholDec[j][j])*(covM[nodes[nodes_size]][nodes[j]]-sumCov));
+    }
+    double num=gamma.corrMCholDec[nodes_size][nodes_size]*gamma.corrMCholDec[nodes_size][nodes_size];
+    //Lambda_S_ij U X_v U X_u
+    nodes[nodes_size]=gamma.Xv;
+    for(int j=0;j<=nodes_size;j++)
+    {
+        double sumCorr=0.0, sumCov=0.0;
+        for (int i=0;i<j;i++)
+        {
+            sumCorr += gamma.corrMCholDec[nodes_size][i] * gamma.corrMCholDec[j][i];
+            sumCov += gamma.covMCholDec[nodes_size][i] * gamma.covMCholDec[j][i];
+        }
+        gamma.corrMCholDec[nodes_size][j]=(nodes_size==j)?sqrt(corrM[nodes[nodes_size]][nodes[nodes_size]]-sumCorr):((1.0/gamma.corrMCholDec[j][j])*(corrM[nodes[nodes_size]][nodes[j]]-sumCorr));
+        gamma.covMCholDec[nodes_size][j]=(nodes_size==j)?sqrt(covM[nodes[nodes_size]][nodes[nodes_size]]-sumCov):((1.0/gamma.covMCholDec[j][j])*(covM[nodes[nodes_size]][nodes[j]]-sumCov));
+    }
+    gamma.corrMCholDec.push_back(new double[k+1]);
+    gamma.covMCholDec.push_back(new double[k+1]);
+    nodes_size=k;
+    nodes.push_back(gamma.Xu);
+    for(int j=0;j<=nodes_size;j++)
+    {
+        double sumCorr=0.0, sumCov=0.0;
+        for (int i=0;i<j;i++)
+        {
+            sumCorr += gamma.corrMCholDec[nodes_size][i] * gamma.corrMCholDec[j][i];
+            sumCov += gamma.covMCholDec[nodes_size][i] * gamma.covMCholDec[j][i];
+        }
+        gamma.corrMCholDec[nodes_size][j]=(nodes_size==j)?sqrt(corrM[nodes[nodes_size]][nodes[nodes_size]]-sumCorr):(1.0/gamma.corrMCholDec[j][j]*(corrM[nodes[nodes_size]][nodes[j]]-sumCorr));
+        gamma.covMCholDec[nodes_size][j]=(nodes_size==j)?sqrt(covM[nodes[nodes_size]][nodes[nodes_size]]-sumCov):(1.0/gamma.covMCholDec[j][j]*(covM[nodes[nodes_size]][nodes[j]]-sumCov));
+    }
+    double den=gamma.corrMCholDec[nodes_size][nodes_size]*gamma.corrMCholDec[nodes_size][nodes_size];
+    gamma.wInc=0.5*log(num/den);
+
+}
+
+    ///--Priority queue creation
+void tChJT::FillPriorityQueue()
+{
+    vector<bool> visited(tchjt.VertexCount(),false);
+    DFSPQ(getBestVertex(),visited);
+}
+
+
+void tChJT::DFSPQ(int vertex_id, vector<bool> & visited)
+{
+    visited[vertex_id] = true;
+    for (Edge<Separator> e : tchjt.GetVertex(vertex_id).GetOutgoingEdges())
+    {
+        int neighbor_id = e.GetDestinationID();
+        if (!visited[neighbor_id])
+        {
+            PotentialUpdate gamma,gamma2;
+            gamma.CA=gamma2.CD=vertex_id;
+            gamma.CD=gamma2.CA=neighbor_id;
+            gamma.Xv=gamma2.Xu=e.GetData().Xv[0];
+            gamma2.Xv=gamma.Xu=e.GetData().Xu;
+            gamma.updateCase=gamma2.updateCase=4;
+            setW(gamma,e);
+            //ToDo. this can be replicated to some extent from previous calculus
+            setW(gamma2,e);
+            Gamma.push(gamma);
+            Gamma.push(gamma2);
+            DFSPQ(neighbor_id,visited);
+        }
+    }
+}
+///--Priority queue creation
+
+bool tChJT::isValid(PotentialUpdate& T)
+{
+    //If donor cluster does not exist or active cluster has already k+1 vars, continue
+    if(tchjt.GetVertex(T.CA).GetData().updated || tchjt.GetVertex(T.CD).GetData().deleted)
         return false;
-    if((int)(tcjt->GetVertex(T.CA).GetData().nodes.size())>k && (int)(tcjt->GetVertex(T.CD).GetData().nodes.size())>k)  ///If both clusters size are k+1 then no potential update step exists
+    //If both clusters size are k+1 then no potential update step exists
+    if((int)(tchjt.GetVertex(T.CA).GetData().nodes.size())>k && (int)(tchjt.GetVertex(T.CD).GetData().nodes.size())>k)
         return false;
-    if(T.ucase==4)
-        if((int)(tcjt->GetVertex(T.CA).GetData().nodes.size())>k || (int)(tcjt->GetVertex(T.CD).GetData().nodes.size())>k) ///If weight increase was calculated from case 4, this configuration has to be stiil in the tree
-            return false;
     return true;
 }
 
 
-void TCHULib::increaseOrder()
+void tChJT::increaseOrder()
 {
-    FillTable();
-    /*priority_queue<UTableRow> ax;
-    while(!pq.empty())
+    FillPriorityQueue();
+    //Priority queue printing
+    priority_queue<PotentialUpdate> ax;
+    cout<<"Valores de cola de prioridad"<<endl<<"CA-CD-XV-XU-WINC"<<endl;
+    while(!Gamma.empty())
     {
-        UTableRow t=pq.top();
+        PotentialUpdate t=Gamma.top();
         ax.push(t);
-        pq.pop();
-        cout<<t.CA<<" "<<t.CD<<" "<<" "<<t.v<<" "<<t.w<<endl;
+        Gamma.pop();
+        cout<<t.CA<<" "<<t.CD<<" "<<t.Xv<<" "<<t.Xu<<" "<<t.wInc<<endl;
     }
     while(!ax.empty())
     {
-        UTableRow t=ax.top();
-        pq.push(t);
+        PotentialUpdate t=ax.top();
+        Gamma.push(t);
         ax.pop();
-    }*/
+    }
+    //-------------
 
-    int activeCherries=tcjt->VertexCount();
-    bool rootUpdated=false;
-    while(activeCherries>0)
+    int updatableClusters=tchjt.VertexCount();
+    double maxClusterWeight = 0.0;
+    while(updatableClusters > 0)
     {
-        UTableRow T=pq.top();
-        pq.pop();
+        PotentialUpdate T = Gamma.top();
+        Gamma.pop();
+        cout<<"Potential update\n"<<T.CA<<" "<<T.CD<<" "<<T.Xv<<" "<<T.Xu<<" "<<T.wInc<<": ";
+        ///If maximum weight change is valid, add var v to active cluster
         if(isValid(T))
-        {                                                           ///If maximum weight change is valid, add var v to active cluster
-            tcjt->GetVertex(T.CA).GetData().nodes.push_back(T.v);
-            tcjt->GetVertex(T.CA).GetData().active=false;
-            tcjt->GetVertex(T.CA).GetData().weight=T.wCAn;
-            activeCherries--;
-            if(!rootUpdated)
+        {
+            cout<<"Taken!!!\n";
+            tchjt.GetVertex(T.CA).GetData().nodes.push_back(T.Xv);
+            tchjt.GetVertex(T.CA).GetData().weight=T.wSXvXu;
+            tchjt.GetVertex(T.CA).GetData().updated=true;
+            updatableClusters--;
+            if(T.updateCase==4)
             {
-                root=T.CA;
-                rootUpdated=true;
+                for (Edge<Separator>& e : tchjt.GetVertex(T.CD).GetOutgoingEdges())       ///Link donor cluster neighbors to CA'
+                    if(!(tchjt.GetVertex(e.GetDestinationID()).GetData().deleted) && e.GetDestinationID()!=T.CA)
+                    {
+                        tchjt.AddEdge(e.GetDestinationID(),T.CA,e.GetData(),false);  ///In case 4 new separators are always of size k-1
+                        tchjt.AddEdge(T.CA,e.GetDestinationID(),e.GetData(),false);   ///So keeping the data in old ones works fine
+                        if(!(tchjt.GetVertex(e.GetDestinationID()).GetData().updated))
+                        {
+                            PotentialUpdate gamma;
+                            gamma.Xv=T.Xu;                ///Now variable Xu can can be donated from active cluster to the neighbors of CD
+                            gamma.CA=e.GetDestinationID();
+                            gamma.CD=T.CA;
+                            gamma.Xu=T.Xu;
+                            gamma.updateCase=2;
+                            setW(gamma, e);  ///Donor cluster (active cluster) is now size k+1, and its active neighbor cluster is size K, so case 2 always happen
+                            Gamma.push(gamma);
+                        }
+                    }
+                ///case 4 happens, so "drop" donor cluster
+                tchjt.GetVertex(T.CD).GetData().updated=true;
+                tchjt.GetVertex(T.CD).GetData().deleted=true;
+                updatableClusters--;
             }
-            if(T.ucase==4)                                              ///If case 4 happens, drop donor cluster
+            else if(T.updateCase == 2)
             {
-                for (OutEdge<Separator>& e : tcjt->GetVertex(T.CD).GetOutgoingEdges())       ///For each neighbor of the donor cluster
-                    if(tcjt->GetVertex(e.GetDestID()).GetData().exists && e.GetDestID()!=T.CA)
+                for (Edge<Separator>& e : tchjt.GetVertex(T.CA).GetOutgoingEdges())       ///Find the separators between CA and CD and add the variable v
+                    if(e.GetDestinationID()==T.CD)
                     {
-                        e.GetData().complete=false;
-                        tcjt->AddEdge(e.GetDestID(),T.CA,e.GetData(),0.0,false);  ///If case 4 happens, new separators are always of size k-1
-                        tcjt->AddEdge(T.CA,e.GetDestID(),e.GetData(),0.0,false);   ///So keeping the old ones works fine
-                    }
-                    tcjt->GetVertex(T.CD).GetData().active=tcjt->GetVertex(T.CD).GetData().exists=false;
-                    activeCherries--;
-            }
-            else if(T.ucase==2)
-            {
-
-                for (OutEdge<Separator>& e : tcjt->GetVertex(T.CA).GetOutgoingEdges())       ///Find the separators between CA and CD and add the variable v
-                    if(e.GetDestID()==T.CD)
-                    {
-                        e.GetData().complete=false;
-                        e.GetData().nodes.push_back(T.v);
-                        e.GetData().weight=T.wSn;
+                        e.GetData().nodes.push_back(T.Xv);
+                        e.GetData().weight=T.wS;
+                        e.GetData().corrMCholDec=T.corrMCholDec;
+                        e.GetData().covMCholDec=T.covMCholDec;
                     }
 
-                for (OutEdge<Separator>& e : tcjt->GetVertex(T.CD).GetOutgoingEdges())       ///Find the separator between CA and CD and add the variable v
-                    if(e.GetDestID()==T.CA)
+                for (Edge<Separator>& e : tchjt.GetVertex(T.CD).GetOutgoingEdges())       ///Find the separator between CA and CD and add the variable v
+                    if(e.GetDestinationID()==T.CA)
                     {
-                        e.GetData().complete=false;
-                        e.GetData().nodes.push_back(T.v);
-                        e.GetData().weight=T.wSn;
+                        e.GetData().nodes.push_back(T.Xv);
+                        e.GetData().weight=T.wS;
+                        e.GetData().corrMCholDec=T.corrMCholDec;
+                        e.GetData().covMCholDec=T.covMCholDec;
                     }
             }
-
-            for (OutEdge<Separator>& e : tcjt->GetVertex(T.CA).GetOutgoingEdges())       ///Add potential steps generated from adding the variable v to the neighbors of active cluster and deleting CD if happened
-                if(tcjt->GetVertex(e.GetDestID()).GetData().exists && tcjt->GetVertex(e.GetDestID()).GetData().active)  ///If new or old neighbor of CA is still active, there is a potential step to add
+            for (Edge<Separator>& e : tchjt.GetVertex(T.CA).GetOutgoingEdges())       ///Add potential steps generated from adding the variable v to the neighbors of active cluster and deleting CD if happened
+                if(!(tchjt.GetVertex(e.GetDestinationID()).GetData().deleted) && !(tchjt.GetVertex(e.GetDestinationID()).GetData().updated))  ///If new or old neighbor of CA is still active, there is a potential step to add
                 {
-                    UTableRow newT;
-                    vector<int> psa;
-                    Getdonating_V_ariable(T.CA,psa,e.GetDestID());
-                    for(int i=0;i<(int)psa.size();i++)
-                    {
-                        newT.v=psa[i];                ///Now variable v can can be donated from active cluster to its neighbors
-                        newT.CA=e.GetDestID();
-                        newT.ucase=2;
-                        newT.CD=T.CA;             ///Active cluster is now the donor cluster
-                        getW(newT,newT.CA,newT.CD,e.GetData().nodes,newT.v,newT.ucase);  ///Donor cluster (active cluster) is now size k+1, and its active neighbor cluster is size K, so case 2 always happen
-                        pq.push(newT);
-                    }
+                    PotentialUpdate gamma;
+                    gamma.Xv=T.Xv;                ///Now variable v can can be donated from active cluster to its active neighbors
+                    gamma.CA=e.GetDestinationID();
+                    gamma.CD=T.CA;
+                    gamma.Xu=T.Xu;
+                    gamma.updateCase=2;
+                    setW(gamma, e);  ///Donor cluster (active cluster) is now size k+1, and its active neighbor cluster is size K, so case 2 always happen
+                    Gamma.push(gamma);
                 }
+            if(maxClusterWeight<tchjt.GetVertex(T.CA).GetData().weight)
+            {
+                rootCluster=T.CA;
+                maxClusterWeight=tchjt.GetVertex(T.CA).GetData().weight;
+            }
+        }
+        else
+        {
+            cout<<"Dropped :(\n";
         }
     }
     k++;
-    ProcessBUDS();
-    clean();
+    //ProcessBUDS();
+    //clean();
 }
 
 
-void TCHULib::ProcessBUDS()
+/*void tChJT::ProcessBUDS()
 {
     vector<bool> visited(tcjt->VertexCount(),false);
     vector<pair<int,pair<int,vector<int>>>> buds;
@@ -331,7 +443,7 @@ void TCHULib::ProcessBUDS()
 
 
 
-void TCHULib::DFSGetBUDS(int vertex_id, vector<bool>& visited, vector<pair<int,pair<int,vector<int>>>>& buds)
+void tChJT::DFSGetBUDS(int vertex_id, vector<bool>& visited, vector<pair<int,pair<int,vector<int>>>>& buds)
 {
     visited[vertex_id] = true;
     for (OutEdge<Separator>& e : tcjt->GetVertex(vertex_id).GetOutgoingEdges())
@@ -345,143 +457,11 @@ void TCHULib::DFSGetBUDS(int vertex_id, vector<bool>& visited, vector<pair<int,p
         }
 
     }
-}
+}*/
 
 
 
-
-void TCHULib::FillTable()
-{
-    vector<bool> visited(tcjt->VertexCount(),false);
-    DFSTable(root,visited);
-}
-
-
-void TCHULib::DFSTable(int vertex_id,vector<bool> & visited)
-{
-    visited[vertex_id] = true;
-    for (OutEdge<Separator> e : tcjt->GetVertex(vertex_id).GetOutgoingEdges())
-    {
-        int neighbor_id = e.GetDestID();
-        if (!visited[neighbor_id])
-        {
-            UTableRow t,t2;
-            t.CA=t2.CD=vertex_id;
-            t.CD=t2.CA=neighbor_id;
-            t.v=e.GetData().v[0];
-            t2.v=e.GetData().dVA;
-            t.ucase=t2.ucase=4;
-            getW(t,vertex_id,neighbor_id,e.GetData().nodes,e.GetData().v[0],t.ucase);
-            t2.w=t.w;
-            t2.wCAn=t.wCAn;
-            pq.push(t);
-            pq.push(t2);
-            DFSTable(neighbor_id,visited);
-        }
-    }
-}
-
-
-void TCHULib::getW(UTableRow &T, int CA, int CD, vector<int> &sep, int v, int ucase)
-{
-    if(ucase==2)
-    {
-        double dCAv,dCA, dSuv, dS;
-        int sCA=tcjt->GetVertex(CA).GetData().nodes.size(), ssep=sep.size();
-        double** aux=new double*[sCA+1];
-        for(int c=0;c<=sCA;c++)
-            aux[c]=new double[sCA+1];
-        //separator
-        for(int c=0;c<ssep;c++)
-                for(int d=0;d<ssep;d++)
-                    aux[c][d]=corrM[sep[c]][sep[d]];
-        dS=determinant(aux,ssep);
-        //dS=(2.0*3.14159265359*2.71828182846*covM[sep[0]][sep[0]]);
-
-        //separator union v
-        for(int c=0;c<ssep;c++)
-            aux[ssep][c]=aux[c][ssep]=corrM[sep[c]][v];
-        aux[ssep][ssep]=corrM[v][v];
-        dSuv=determinant(aux,ssep+1);
-        T.wSn=-0.5*log(dSuv);
-        //Active Cluster CA
-        for(int c=0;c<sCA;c++)
-            for(int d=0;d<sCA;d++)
-                aux[c][d]=corrM[tcjt->GetVertex(CA).GetData().nodes[c]][tcjt->GetVertex(CA).GetData().nodes[d]];
-        dCA=determinant(aux,sCA);
-
-        //Active Cluster CA union v
-        for(int c=0;c<sCA;c++)
-            aux[sCA][c]=aux[c][sCA]=corrM[tcjt->GetVertex(CA).GetData().nodes[c]][v];
-        aux[sCA][sCA]=corrM[v][v];
-        dCAv=determinant(aux,sCA+1);
-        T.wCAn=-0.5*log(dCAv);
-        for(int c=0;c<=sCA;c++)
-            delete[] aux[c];
-        delete[] aux;
-        T.w=(dCA*dSuv)/(dCAv*dS);
-    }
-    else
-    {
-        double dCAv,dCA, dCD, dS;
-        int sCA=tcjt->GetVertex(CA).GetData().nodes.size(),sCD=tcjt->GetVertex(CD).GetData().nodes.size(), ssep=sep.size();
-        int ms=max(sCA,sCD);
-
-        double** aux=new double*[ms+1];
-        for(int c=0;c<=ms;c++)
-            aux[c]=new double[ms+1];
-        //separator
-        for(int c=0;c<ssep;c++)
-            for(int d=0;d<ssep;d++)
-                aux[c][d]=corrM[sep[c]][sep[d]];
-        dS=determinant(aux,ssep);
-
-        //Donor Cluster CD
-        for(int c=0;c<sCD;c++)
-            for(int d=0;d<sCD;d++)
-            {
-                if(tcjt->GetVertex(CD).GetData().nodes[c]>=getN() || tcjt->GetVertex(CD).GetData().nodes[c]<0 || tcjt->GetVertex(CD).GetData().nodes[d]>=getN() || tcjt->GetVertex(CD).GetData().nodes[d]<0)
-                {
-                    FILE* dump;
-                    dump=fopen("dump","wb");
-                    for(int x=0;x<getN();x++)
-                    {
-                        for(int y=0;y<getN();y++)
-                        {
-                            printf("%.8lf\t",getcovM()[x][y]);
-                            fwrite(&(getcovM()[x][y]),sizeof(double), 1, dump);
-                        }
-                        printf("\n");
-                    }
-
-
-                    fclose(dump);
-                }
-                aux[c][d]=corrM[tcjt->GetVertex(CD).GetData().nodes[c]][tcjt->GetVertex(CD).GetData().nodes[d]];
-            }
-
-        dCD=determinant(aux,sCD);
-
-        //Active Cluster CA
-        for(int c=0;c<sCA;c++)
-            for(int d=0;d<sCA;d++)
-                aux[c][d]=corrM[tcjt->GetVertex(CA).GetData().nodes[c]][tcjt->GetVertex(CA).GetData().nodes[d]];
-        dCA=determinant(aux,sCA);
-
-        //Active Cluster CA union v
-        for(int c=0;c<sCA;c++)
-            aux[sCA][c]=aux[c][sCA]=corrM[tcjt->GetVertex(CA).GetData().nodes[c]][v];
-        aux[sCA][sCA]=corrM[v][v];
-        dCAv=determinant(aux,sCA+1);
-        T.wCAn=-0.5*log(dCAv);
-        for(int c=0;c<=ms;c++)
-            delete[] aux[c];
-        delete[] aux;
-        T.w=(dCA*dCD)/(dCAv*dS);
-    }
-}
-
-void TCHULib::getWBUD(double &w, double &wS1, double &wS2, double &wC12, vector<int>& sep, int v1, int v2)
+/*void tChJT::getWBUD(double &w, double &wS1, double &wS2, double &wC12, vector<int>& sep, int v1, int v2)
 {
     double dC,dSuv2, dSuv1, dS;
     int sCA=sep.size()+2, ssep=sep.size();
@@ -592,10 +572,10 @@ void TCHULib::getWBUD(double &w, double &wS1, double &wS2, double &wC12, vector<
     delete[] aux[c];
         delete[] aux;
     w=(dSuv1*dSuv2)/(dC*dS);
-}
+}*/
 
-
-void TCHULib::clean()
+/*
+void tChJT::clean()
 {
     aux= new Graph<Cherry,Separator>(true);
     weight=0.0;
@@ -656,7 +636,7 @@ void TCHULib::clean()
     aux=nullptr;
     while(!pq.empty())
         pq.pop();
-}
+}*/
 
 
 
@@ -668,140 +648,44 @@ void TCHULib::clean()
 
 
 
-///-----Building the DAG
-void TCHULib::buildDAG()  ///Does a DFS in the cherry tree, creates a complete graph for the root, and adds for every child its dominating vertex
-{
-    vector<bool> visited(tcjt->VertexCount(),false);
-    for(int c=0;c<n;c++)
-        DAG->AddVertex(c);
-    for(int c=0;c<k;c++)
-    {
-        perm.push_back(tcjt->GetVertex(root).GetData().nodes[c]);
-        for(int d=0;d<c;d++)
-            DAG->AddEdge(tcjt->GetVertex(root).GetData().nodes[d],tcjt->GetVertex(root).GetData().nodes[c],0,0.0,false);
-    }
-    //cout<<*DAG;
-    DAGDFS(root,visited);
-}
 
 
 
-void TCHULib::DAGDFS(int vertex_id,vector<bool> & visited)
-{
-    visited[vertex_id] = true;
-    for (OutEdge<Separator> e : tcjt->GetVertex(vertex_id).GetOutgoingEdges())
-    {
-        int neighbor_id = e.GetDestID();
-        if (!visited[neighbor_id])
-        {
-            for(int origin : e.GetData().nodes)
-                DAG->AddEdge(origin,e.GetData().v[0],0,0.0,false); ///add edges from current the separator
-            perm.push_back(e.GetData().v[0]);
-            DAGDFS(neighbor_id,visited);
-       }
-    }
-}
-///-----Building the DAG
-
-/*
-
-
-
-
-
-
-*/
-ostream & operator<<(ostream & out, TCHULib & g)
+ostream & operator<<(ostream & out, tChJT & g)
 {
 
     g.Print(out);
     return out;
 }
 
-void TCHULib::Print2File(int gen, int fun, int d, int k)
-{
-   //get the filename
-    /*string path = "/home/tizo/rClassicEDA/graphs";
-    int maxID = 0;
-    DIR *dir;
-    struct dirent *DirEntry;
-    dir = opendir(path.c_str());
 
-    while(DirEntry=readdir(dir))
-    {
-        string file = DirEntry->d_name;
-        string strid = file.replace(file.begin(),file.begin()+1,"");
-        char* p=0;
-        strtol(strid.c_str(), &p, 10);
-        if(!*p)
-            if (maxID<atoi(strid.c_str()))
-                maxID = atoi(strid.c_str());
-    }
-    closedir(dir);*/
-
-    ofstream myfile;
-    myfile.open ("/home/tizo/rClassicEDA/graphs/C" + to_string(d) + "_" + to_string(k) + "_" + to_string(fun) + "_" + to_string(gen));
-    myfile<<"cluster,label,w_s"<<endl;
-    for(int c=0;c<tcjt->VertexCount();c++)
-    {
-        if(tcjt->GetVertex(c).GetData().exists)
-        {
-            myfile<<"C_"<<tcjt->GetVertex(c).GetID()<<",{";
-            for (int d : tcjt->GetVertex(c).GetData().nodes)
-                myfile << d << " ";
-            myfile<<"},"<<tcjt->GetVertex(c).GetData().weight<<"\n";
-        }
-
-    }
-    myfile.close();
-
-    myfile.open ("/home/tizo/rClassicEDA/graphs/S" + to_string(d) + "_" + to_string(k) + "_" + to_string(fun) + "_" + to_string(gen));
-    myfile<<"from,to,label,w_s"<<endl;
-    for(int c=0;c<tcjt->VertexCount();c++)
-    {
-        if(tcjt->GetVertex(c).GetData().exists)
-        {
-            Vertex<Cherry,Separator> v=tcjt->GetVertex(c);
-            for (OutEdge<Separator> e : v.GetOutgoingEdges())
-            {
-                myfile << "C_" << v.GetID() << ",C_";
-                myfile << tcjt->GetVertex(e.GetDestID()).GetID()<<",{";
-                for (int nod : e.GetData().nodes)
-                    myfile << " " << nod;
-                myfile<<"},"<<e.GetData().weight<<endl;
-            }
-        }
-    }
-    myfile.close();
-}
-
-void TCHULib::Print(ostream & out)
+void tChJT::Print(ostream & out)
 {
     out << "W= "<<getWeight()<<endl<<"Clusters: \n";
-    for(int c=0;c<tcjt->VertexCount();c++)
+    for(int c=0;c<tchjt.VertexCount();c++)
     {
-        if(tcjt->GetVertex(c).GetData().exists)
+        if(!(tchjt.GetVertex(c).GetData().deleted))
         {
-            out<<"# "<<tcjt->GetVertex(c).GetID()<<":( ";
-            for (int d : tcjt->GetVertex(c).GetData().nodes)
+            out<<"# "<<tchjt.GetVertex(c).GetID()<<":( ";
+            for (int d : tchjt.GetVertex(c).GetData().nodes)
                 out << d << " ";
-            out<<"), W= "<<tcjt->GetVertex(c).GetData().weight<<"\n";
+            out<<"), W= "<<tchjt.GetVertex(c).GetData().weight<<"\n";
         }
 
     }
 
     out << "\n\n";
     out << "Out Separators: \n";
-    for(int c=0;c<tcjt->VertexCount();c++)
+    for(int c=0;c<tchjt.VertexCount();c++)
     {
-        if(tcjt->GetVertex(c).GetData().exists)
+        if(!(tchjt.GetVertex(c).GetData().deleted))
         {
-            Vertex<Cherry,Separator> v=tcjt->GetVertex(c);
+            Vertex<Cluster,Separator> v=tchjt.GetVertex(c);
             out << v.GetID() << "-> {";
-            for (OutEdge<Separator> e : v.GetOutgoingEdges())
+            for (Edge<Separator> e : v.GetOutgoingEdges())
             {
-                out << " " << tcjt->GetVertex(e.GetDestID()).GetID()<<" - C:"<<e.GetData().complete<<" - DV:"<<e.GetData().dVA<<" - V:";
-                for(int nod : e.GetData().v)
+                out << " " << tchjt.GetVertex(e.GetDestinationID()).GetID()<<" - C:"<<e.GetData().complete<<" - DV:"<<e.GetData().Xu<<" - V:";
+                for(int nod : e.GetData().Xv)
                     out << "," << nod;
                 out<<" - NODES:(";
                 for (int nod : e.GetData().nodes)
@@ -813,16 +697,16 @@ void TCHULib::Print(ostream & out)
     }
     out << "\n\n";
     out << "In Separators \n";
-    for(int c=0;c<tcjt->VertexCount();c++)
+    for(int c=0;c<tchjt.VertexCount();c++)
     {
-        if(tcjt->GetVertex(c).GetData().exists)
+        if(!(tchjt.GetVertex(c).GetData().deleted))
         {
-            Vertex<Cherry,Separator> v=tcjt->GetVertex(c);
+            Vertex<Cluster,Separator> v=tchjt.GetVertex(c);
             out << v.GetID() << "<-{";
-            for (InEdge<Separator> e : v.GetIngoingEdges())
+            for (Edge<Separator> e : v.GetIngoingEdges())
             {
-                out << " " << tcjt->GetVertex(e.GetOriginID()).GetID()<<"- C:"<<e.GetData().complete<<" - DV:"<<e.GetData().dVA<<" - V:";
-                for(int nod : e.GetData().v)
+                out << " " << tchjt.GetVertex(e.GetOriginID()).GetID()<<"- C:"<<e.GetData().complete<<" - DV:"<<e.GetData().Xu<<" - V:";
+                for(int nod : e.GetData().Xv)
                     out << "," << nod;
                 out<<" - NODES: (";
                 for (int nod : e.GetData().nodes)
