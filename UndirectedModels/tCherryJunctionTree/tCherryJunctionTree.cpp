@@ -1,18 +1,18 @@
-#include "../../../graph/Graph.h"
-#include "tChJT.h"
-#include "DeterminantCalculator.h"
+#include "../../Graph/Graph.h"
+#include "../../Utilities/Determinant.h"
+#include "tCherryJunctionTree.h"
 #include <queue>
 #include <iostream>
 #include <fstream>
 #include <dirent.h>
 
 ///-----Properties
-double tChJT::getWeight()
+double tCherryJunctionTree::getWeight()
 {
     return weight;
 }
 
-double tChJT::getModelDifferentialEntropy()
+double tCherryJunctionTree::getModelDifferentialEntropy()
 {
     return diffEntropy;
 }
@@ -21,7 +21,7 @@ double tChJT::getModelDifferentialEntropy()
 
 ///ctor - dtor
 
-void tChJT::initVars()
+void tCherryJunctionTree::initVars()
 {
     weight=0.0;
     diffEntropy=0.0;
@@ -29,19 +29,19 @@ void tChJT::initVars()
 }
 
 
-tChJT::tChJT(ChLT* chowLiuTree, double** corrM, double** covM, int d) : UndirectedModel(corrM,covM,d,0), baseModel(chowLiuTree)
+tCherryJunctionTree::tCherryJunctionTree(ChowLiuTree* chowLiuTree, double** corrM, double** covM, int d) : UndirectedModel(corrM,covM,d,0), baseModel(chowLiuTree)
 {
     initVars();
 }
 
-tChJT::tChJT(double** corrM, double** covM, int d) : UndirectedModel(corrM,covM,d,0)
+tCherryJunctionTree::tCherryJunctionTree(double** corrM, double** covM, int d) : UndirectedModel(corrM,covM,d,0)
 {
     initVars();
-    baseModel=new ChLT(corrM,covM,d);
+    baseModel=new ChowLiuTree(corrM,covM,d);
     baseModel->build();
 }
 
-tChJT::~tChJT()
+tCherryJunctionTree::~tCherryJunctionTree()
 {
 }
 
@@ -50,7 +50,7 @@ tChJT::~tChJT()
 
 ///-----Construction of t=2 Cherry Junction Tree from a Chow&Liu Tree
 
-void tChJT::Getdonating_V_ariable(int CD, vector<int> &s, int CA)
+void tCherryJunctionTree::Getdonating_V_ariable(int CD, vector<int> &s, int CA)
 {
     for (int vD : tchjt.GetVertexData(CD).nodes)
     {
@@ -66,7 +66,7 @@ void tChJT::Getdonating_V_ariable(int CD, vector<int> &s, int CA)
     }
 }
 
-void tChJT::DFSChLT(int vertex_id, vector<bool> & visited, bool root, int parent_cluster)
+void tCherryJunctionTree::DFSChowLiuTree(int vertex_id, vector<bool> & visited, bool root, int parent_cluster)
 {
     visited[vertex_id] = true;
     for (Edge<double> e : baseModel->structure.GetVertex(vertex_id).GetOutgoingEdges())
@@ -121,18 +121,18 @@ void tChJT::DFSChLT(int vertex_id, vector<bool> & visited, bool root, int parent
             else
             {
                 parent_cluster=cluster_id;
-                bestV=cluster_id;
+                mainV=cluster_id;
             }
             root=false;
-            DFSChLT(neighbor_id,visited,false,cluster_id);
+            DFSChowLiuTree(neighbor_id,visited,false,cluster_id);
         }
     }
 }
 
-void tChJT::build(int _k)
+void tCherryJunctionTree::build(int _k)
 {
     vector<bool> visited(d,false);
-    DFSChLT(baseModel->getBestVertex(),visited,true,-1);
+    DFSChowLiuTree(baseModel->getMainVertex(),visited,true,-1);
     k=baseModel->getOrder();
     for(int kappa=3;kappa<=k;kappa++)
         increaseOrder();
@@ -146,7 +146,7 @@ void tChJT::build(int _k)
 ///-----Order Update
 
 //Equation 10 implementation
-void tChJT::setW(PotentialUpdate &gamma,Edge<Separator>& e)
+void tCherryJunctionTree::setW(PotentialUpdate &gamma,Edge<Separator>& e)
 {
     vector<int> nodes;
     //ToDo: This can be done in O(1)
@@ -206,14 +206,14 @@ void tChJT::setW(PotentialUpdate &gamma,Edge<Separator>& e)
 }
 
     ///--Priority queue creation
-void tChJT::FillPriorityQueue()
+void tCherryJunctionTree::FillPriorityQueue()
 {
     vector<bool> visited(tchjt.VertexCount(),false);
-    DFSPQ(getBestVertex(),visited);
+    DFSPQ(getMainVertex(),visited);
 }
 
 
-void tChJT::DFSPQ(int vertex_id, vector<bool> & visited)
+void tCherryJunctionTree::DFSPQ(int vertex_id, vector<bool> & visited)
 {
     visited[vertex_id] = true;
     for (Edge<Separator> e : tchjt.GetVertex(vertex_id).GetOutgoingEdges())
@@ -238,7 +238,7 @@ void tChJT::DFSPQ(int vertex_id, vector<bool> & visited)
 }
 ///--Priority queue creation
 
-bool tChJT::isValid(PotentialUpdate& T)
+bool tCherryJunctionTree::isValid(PotentialUpdate& T)
 {
     //If donor cluster does not exist or active cluster has already k+1 vars, continue
     if(tchjt.GetVertex(T.CA).GetData().updated || tchjt.GetVertex(T.CD).GetData().deleted)
@@ -250,7 +250,7 @@ bool tChJT::isValid(PotentialUpdate& T)
 }
 
 
-void tChJT::increaseOrder()
+void tCherryJunctionTree::increaseOrder()
 {
     FillPriorityQueue();
     //Priority queue printing
@@ -359,7 +359,7 @@ void tChJT::increaseOrder()
 }
 
 
-/*void tChJT::ProcessBUDS()
+/*void tCherryJunctionTree::ProcessBUDS()
 {
     vector<bool> visited(tcjt->VertexCount(),false);
     vector<pair<int,pair<int,vector<int>>>> buds;
@@ -443,7 +443,7 @@ void tChJT::increaseOrder()
 
 
 
-void tChJT::DFSGetBUDS(int vertex_id, vector<bool>& visited, vector<pair<int,pair<int,vector<int>>>>& buds)
+void tCherryJunctionTree::DFSGetBUDS(int vertex_id, vector<bool>& visited, vector<pair<int,pair<int,vector<int>>>>& buds)
 {
     visited[vertex_id] = true;
     for (OutEdge<Separator>& e : tcjt->GetVertex(vertex_id).GetOutgoingEdges())
@@ -461,7 +461,7 @@ void tChJT::DFSGetBUDS(int vertex_id, vector<bool>& visited, vector<pair<int,pai
 
 
 
-/*void tChJT::getWBUD(double &w, double &wS1, double &wS2, double &wC12, vector<int>& sep, int v1, int v2)
+/*void tCherryJunctionTree::getWBUD(double &w, double &wS1, double &wS2, double &wC12, vector<int>& sep, int v1, int v2)
 {
     double dC,dSuv2, dSuv1, dS;
     int sCA=sep.size()+2, ssep=sep.size();
@@ -575,7 +575,7 @@ void tChJT::DFSGetBUDS(int vertex_id, vector<bool>& visited, vector<pair<int,pai
 }*/
 
 /*
-void tChJT::clean()
+void tCherryJunctionTree::clean()
 {
     aux= new Graph<Cherry,Separator>(true);
     weight=0.0;
@@ -651,7 +651,7 @@ void tChJT::clean()
 
 
 
-ostream & operator<<(ostream & out, tChJT & g)
+ostream & operator<<(ostream & out, tCherryJunctionTree & g)
 {
 
     g.Print(out);
@@ -659,7 +659,7 @@ ostream & operator<<(ostream & out, tChJT & g)
 }
 
 
-void tChJT::Print(ostream & out)
+void tCherryJunctionTree::Print(ostream & out)
 {
     out << "W= "<<getWeight()<<endl<<"Clusters: \n";
     for(int c=0;c<tchjt.VertexCount();c++)

@@ -1,0 +1,149 @@
+Construccion de Chow Liu tree
+Main Vertex=6
+V = 0 1 2 3 4 5 6 7 8 9 
+Out Edges = [0: 4 3] [1: 8] [2: 9 3 5] [3: 0 2] [4: 0] [5: 6 2] [6: 8 5] [7: 8] [8: 6 1 7] [9: 2] 
+ In edges = [0: 4 3] [1: 8] [2: 9 3 5] [3: 0 2] [4: 0] [5: 6 2] [6: 8 5] [7: 8] [8: 6 1 7] [9: 2] 
+Construccion de tCherry Junction Tree k=2 desde chow&liu tree
+W= 0.216301
+Clusters: 
+# 0:( 6 8 ), W= 0.0407401
+# 1:( 8 1 ), W= 0.0384175
+# 2:( 8 7 ), W= 0.0121739
+# 3:( 6 5 ), W= 0.0337523
+# 4:( 5 2 ), W= 0.0111383
+# 5:( 2 9 ), W= 0.021832
+# 6:( 2 3 ), W= 0.0168422
+# 7:( 3 0 ), W= 0.0184169
+# 8:( 0 4 ), W= 0.0229875
+
+
+Out Separators: 
+0-> { 1 - C:1 - DV:1 - V:,6 - NODES:( 8)|  2 - C:1 - DV:7 - V:,6 - NODES:( 8)|  3 - C:1 - DV:5 - V:,8 - NODES:( 6)| }
+1-> { 0 - C:1 - DV:1 - V:,6 - NODES:( 8)| }
+2-> { 0 - C:1 - DV:7 - V:,6 - NODES:( 8)| }
+3-> { 0 - C:1 - DV:5 - V:,8 - NODES:( 6)|  4 - C:1 - DV:2 - V:,6 - NODES:( 5)| }
+4-> { 3 - C:1 - DV:2 - V:,6 - NODES:( 5)|  5 - C:1 - DV:9 - V:,5 - NODES:( 2)|  6 - C:1 - DV:3 - V:,5 - NODES:( 2)| }
+5-> { 4 - C:1 - DV:9 - V:,5 - NODES:( 2)| }
+6-> { 4 - C:1 - DV:3 - V:,5 - NODES:( 2)|  7 - C:1 - DV:0 - V:,2 - NODES:( 3)| }
+7-> { 6 - C:1 - DV:0 - V:,2 - NODES:( 3)|  8 - C:1 - DV:4 - V:,3 - NODES:( 0)| }
+8-> { 7 - C:1 - DV:4 - V:,3 - NODES:( 0)| }
+
+
+In Separators 
+0<-{ 1- C:1 - DV:1 - V:,6 - NODES: ( 8)|  2- C:1 - DV:7 - V:,6 - NODES: ( 8)|  3- C:1 - DV:5 - V:,8 - NODES: ( 6)| }
+1<-{ 0- C:1 - DV:1 - V:,6 - NODES: ( 8)| }
+2<-{ 0- C:1 - DV:7 - V:,6 - NODES: ( 8)| }
+3<-{ 0- C:1 - DV:5 - V:,8 - NODES: ( 6)|  4- C:1 - DV:2 - V:,6 - NODES: ( 5)| }
+4<-{ 3- C:1 - DV:2 - V:,6 - NODES: ( 5)|  5- C:1 - DV:9 - V:,5 - NODES: ( 2)|  6- C:1 - DV:3 - V:,5 - NODES: ( 2)| }
+5<-{ 4- C:1 - DV:9 - V:,5 - NODES: ( 2)| }
+6<-{ 4- C:1 - DV:3 - V:,5 - NODES: ( 2)|  7- C:1 - DV:0 - V:,2 - NODES: ( 3)| }
+7<-{ 6- C:1 - DV:0 - V:,2 - NODES: ( 3)|  8- C:1 - DV:4 - V:,3 - NODES: ( 0)| }
+8<-{ 7- C:1 - DV:4 - V:,3 - NODES: ( 0)| }
+
+Construccion de tCherry Junction Tree k=2
+W= 0.216301
+Clusters: 
+# 0:( 6 8 ), W= 0.0407401
+# 1:( 8 1 ), W= 0.0384175
+# 2:( 8 7 ), W= 0.0121739
+# 3:( 6 5 ), W= 0.0337523
+# 4:( 5 2 ), W= 0.0111383
+# 5:( 2 9 ), W= 0.021832
+# 6:( 2 3 ), W= 0.0168422
+# 7:( 3 0 ), W= 0.0184169
+# 8:( 0 4 ), W= 0.0229875
+
+
+Out Separators: 
+0-> { 1 - C:1 - DV:1 - V:,6 - NODES:( 8)|  2 - C:1 - DV:7 - V:,6 - NODES:( 8)|  3 - C:1 - DV:5 - V:,8 - NODES:( 6)| }
+1-> { 0 - C:1 - DV:1 - V:,6 - NODES:( 8)| }
+2-> { 0 - C:1 - DV:7 - V:,6 - NODES:( 8)| }
+3-> { 0 - C:1 - DV:5 - V:,8 - NODES:( 6)|  4 - C:1 - DV:2 - V:,6 - NODES:( 5)| }
+4-> { 3 - C:1 - DV:2 - V:,6 - NODES:( 5)|  5 - C:1 - DV:9 - V:,5 - NODES:( 2)|  6 - C:1 - DV:3 - V:,5 - NODES:( 2)| }
+5-> { 4 - C:1 - DV:9 - V:,5 - NODES:( 2)| }
+6-> { 4 - C:1 - DV:3 - V:,5 - NODES:( 2)|  7 - C:1 - DV:0 - V:,2 - NODES:( 3)| }
+7-> { 6 - C:1 - DV:0 - V:,2 - NODES:( 3)|  8 - C:1 - DV:4 - V:,3 - NODES:( 0)| }
+8-> { 7 - C:1 - DV:4 - V:,3 - NODES:( 0)| }
+
+
+In Separators 
+0<-{ 1- C:1 - DV:1 - V:,6 - NODES: ( 8)|  2- C:1 - DV:7 - V:,6 - NODES: ( 8)|  3- C:1 - DV:5 - V:,8 - NODES: ( 6)| }
+1<-{ 0- C:1 - DV:1 - V:,6 - NODES: ( 8)| }
+2<-{ 0- C:1 - DV:7 - V:,6 - NODES: ( 8)| }
+3<-{ 0- C:1 - DV:5 - V:,8 - NODES: ( 6)|  4- C:1 - DV:2 - V:,6 - NODES: ( 5)| }
+4<-{ 3- C:1 - DV:2 - V:,6 - NODES: ( 5)|  5- C:1 - DV:9 - V:,5 - NODES: ( 2)|  6- C:1 - DV:3 - V:,5 - NODES: ( 2)| }
+5<-{ 4- C:1 - DV:9 - V:,5 - NODES: ( 2)| }
+6<-{ 4- C:1 - DV:3 - V:,5 - NODES: ( 2)|  7- C:1 - DV:0 - V:,2 - NODES: ( 3)| }
+7<-{ 6- C:1 - DV:0 - V:,2 - NODES: ( 3)|  8- C:1 - DV:4 - V:,3 - NODES: ( 0)| }
+8<-{ 7- C:1 - DV:4 - V:,3 - NODES: ( 0)| }
+
+Valores de cola de prioridad
+CA-CD-XV-XU-WINC
+4 5 5 9 0.012584
+5 4 9 5 0.012584
+4 3 2 6 0.00347077
+3 4 6 2 0.00347077
+6 4 3 5 0.00252389
+4 6 5 3 0.00252389
+7 6 0 2 0.0014528
+6 7 2 0 0.0014528
+2 0 7 6 0.0010521
+0 2 6 7 0.0010521
+7 8 3 4 0.00102073
+8 7 4 3 0.00102073
+0 1 6 1 0.00029297
+1 0 1 6 0.00029297
+0 3 8 5 5.64406e-05
+3 0 5 8 5.64406e-05
+Potential update
+4 5 5 9 0.012584: Taken!!!
+Potential update
+5 4 9 5 0.012584: Dropped :(
+Potential update
+6 4 5 9 0.012584: Taken!!!
+Potential update
+4 3 2 6 0.00347077: Dropped :(
+Potential update
+7 6 5 9 0.00736446: Taken!!!
+Potential update
+8 7 5 9 0.00864715: Taken!!!
+Potential update
+3 4 6 2 0.00347077: Taken!!!
+Potential update
+6 4 3 5 0.00252389: Dropped :(
+Potential update
+4 6 5 3 0.00252389: Dropped :(
+Potential update
+7 6 0 2 0.0014528: Dropped :(
+Potential update
+6 7 2 0 0.0014528: Dropped :(
+Potential update
+2 0 7 6 0.0010521: Taken!!!
+Actualizacion de orden k=3
+W= 0.216301
+Clusters: 
+# 1:( 8 1 ), W= 0.0384175
+# 2:( 8 7 7 ), W= 6.95312e-310
+# 3:( 6 5 6 ), W= 1.6976e-313
+# 6:( 2 3 5 ), W= 4.44659e-323
+# 7:( 3 0 5 ), W= 4.44659e-323
+# 8:( 0 4 5 ), W= 4.44659e-323
+
+
+Out Separators: 
+1-> { 0 - C:1 - DV:1 - V:,6 - NODES:( 8)|  2 - C:1 - DV:1 - V:,6 - NODES:( 8)| }
+2-> { 0 - C:1 - DV:7 - V:,6 - NODES:( 8)|  1 - C:1 - DV:1 - V:,6 - NODES:( 8)|  3 - C:1 - DV:5 - V:,8 - NODES:( 6)| }
+3-> { 0 - C:1 - DV:5 - V:,8 - NODES:( 6)|  4 - C:1 - DV:2 - V:,6 - NODES:( 5)|  6 - C:1 - DV:3 - V:,5 - NODES:( 2 5)|  2 - C:1 - DV:5 - V:,8 - NODES:( 6)| }
+6-> { 4 - C:1 - DV:3 - V:,5 - NODES:( 2 5)|  7 - C:1 - DV:0 - V:,2 - NODES:( 3 5)|  3 - C:1 - DV:3 - V:,5 - NODES:( 2 5)| }
+7-> { 6 - C:1 - DV:0 - V:,2 - NODES:( 3 5)|  8 - C:1 - DV:4 - V:,3 - NODES:( 0 5)| }
+8-> { 7 - C:1 - DV:4 - V:,3 - NODES:( 0 5)| }
+
+
+In Separators 
+1<-{ 0- C:1 - DV:1 - V:,6 - NODES: ( 8)|  2- C:1 - DV:1 - V:,6 - NODES: ( 8)| }
+2<-{ 0- C:1 - DV:7 - V:,6 - NODES: ( 8)|  1- C:1 - DV:1 - V:,6 - NODES: ( 8)|  3- C:1 - DV:5 - V:,8 - NODES: ( 6)| }
+3<-{ 0- C:1 - DV:5 - V:,8 - NODES: ( 6)|  4- C:1 - DV:2 - V:,6 - NODES: ( 5)|  6- C:1 - DV:3 - V:,5 - NODES: ( 2 5)|  2- C:1 - DV:5 - V:,8 - NODES: ( 6)| }
+6<-{ 4- C:1 - DV:3 - V:,5 - NODES: ( 2)|  7- C:1 - DV:0 - V:,2 - NODES: ( 3)|  3- C:1 - DV:3 - V:,5 - NODES: ( 2 5)| }
+7<-{ 6- C:1 - DV:0 - V:,2 - NODES: ( 3)|  8- C:1 - DV:4 - V:,3 - NODES: ( 0)| }
+8<-{ 7- C:1 - DV:4 - V:,3 - NODES: ( 0)| }
+

@@ -1,6 +1,6 @@
 #ifndef CHLT_HPP_INCLUDED
 #define CHLT_HPP_INCLUDED
-#include "../../../graph/Graph.h"
+#include "../../Graph/Graph.h"
 #include "../UndirectedModel.h"
 
 /*

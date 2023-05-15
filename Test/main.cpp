@@ -1,6 +1,7 @@
 #include <iostream>
 #include <iomanip>
-#include "../building/undirectedModel/ChowLiuTree/ChowLiuTree.h"
+#include "../UndirectedModels/ChowLiuTree/ChowLiuTree.h"
+#include "../UndirectedModels/tCherryJunctionTree/tCherryJunctionTree.h"
 using namespace std;
 
 int main()
@@ -33,6 +34,17 @@ int main()
     chowLiuTree.build();
 
     cout<<"Construccion de Chow Liu tree"<<endl<<chowLiuTree;
+
+    tCherryJunctionTree tchjtbase(&chowLiuTree,corrM,covM,D);
+    tchjtbase.build(2);
+    cout<<"Construccion de tCherry Junction Tree k=2 desde chow&liu tree"<<endl<<tchjtbase;
+
+    tCherryJunctionTree tchjt(corrM,covM,D);
+    tchjt.build(2);
+    cout<<"Construccion de tCherry Junction Tree k=2"<<endl<<tchjt;
+    tchjt.increaseOrder();
+    cout<<"Actualizacion de orden k=3"<<endl<<tchjt;
+
 
     return 0;
 }

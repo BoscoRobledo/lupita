@@ -1,7 +1,7 @@
 #ifndef UNDIRECTED_MODEL_H
 #define UNDIRECTED_MODEL_H
 
-#include "../../graph/Graph.h"
+#include "../Graph/Graph.h"
 
 /*
  * Class for fitting gaussian model in an undirected graph

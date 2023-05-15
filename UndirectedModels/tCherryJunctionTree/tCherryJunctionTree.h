@@ -1,24 +1,24 @@
 #ifndef TCHJT_HPP_INCLUDED
 #define TCHJT_HPP_INCLUDED
-#include "../../../graph/Graph.h"
+#include "../../Graph/Graph.h"
+#include "../UndirectedModel.h"
+#include "../ChowLiuTree/ChowLiuTree.h"
 #include "Cluster.h"
 #include "Separator.h"
 #include "PotentialUpdate.h"
-#include "../UndirectedModel.h"
-#include "../ChLT/ChLT.h"
 #include <queue>
 #include <iostream>
 
-class tChJT : public UndirectedModel
+class tCherryJunctionTree : public UndirectedModel
 {
     public:
-        tChJT(double** corrM, double** covM, int d);
-        tChJT(ChLT* chowLiuTree, double** corrM, double** covM, int d);
-        virtual ~tChJT();
+        tCherryJunctionTree(double** corrM, double** covM, int d);
+        tCherryJunctionTree(ChowLiuTree* chowLiuTree, double** corrM, double** covM, int d);
+        virtual ~tCherryJunctionTree();
         void build(int _k);
         double getWeight();
         double getModelDifferentialEntropy();
-        friend ostream & operator<<(ostream & out, tChJT & g);
+        friend ostream & operator<<(ostream & out, tCherryJunctionTree & g);
         void increaseOrder();
         int getRootID();
 
@@ -29,11 +29,11 @@ class tChJT : public UndirectedModel
         //tCherry Junction Tree is declared directed, because donating (v) and destination (d) variables
         //in separator depends on donating and active cluster (ie edge direction)
         Graph<Cluster, Separator> tchjt;
-        ChLT* baseModel;
+        ChowLiuTree* baseModel;
 
         ///-----Construction from 2 tCherry Junction Tree (Chow&Liu Tree)
         void Getdonating_V_ariable(int CD, vector<int> &s, int CA);
-        void DFSChLT(int vertex_id, vector<bool> & visited, bool root, int parentCluster);
+        void DFSChowLiuTree(int vertex_id, vector<bool> & visited, bool root, int parentCluster);
 
         ///-----Order Update
         bool isValid(PotentialUpdate& T);

@@ -1,6 +1,6 @@
 #include <cmath>
 #include "Determinant.h"
-#include "GaussianDistribiution.h"
+#include "GaussianDistribution.h"
 
 /*
  * Computes gaussian entropy from given covariance matrix.
