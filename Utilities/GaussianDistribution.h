@@ -1,23 +1,21 @@
 #ifndef GAUSSIANDISTRIBUTION_HPP_INCLUDED
 #define GAUSSIANDISTRIBUTION_HPP_INCLUDED
-#define MPI 3.14159265358979323846
-#define ME 2.718281828459045235360
 
-/*
- * Computes gaussian entropy from given covariance matrix.
- *  covM: Covariance matrix
- *  n: Size of correlation matrix.
+/** \brief Computes gaussian entropy from given covariance matrix.
  *
- *  returns: Gaussian entropy.
+ * \param covM double** Covariance matrix
+ * \param n int Size of matrix.
+ * \returns Gaussian Entropy.
+ *
  */
 double gaussianEntropy(double** covM, int n);
 
-/*
- * Computes gaussian entropy from given covariance matrix.
- *  covM: Covariance matrix
- *  n: Size of correlation matrix.
+/** \brief Computes gaussian mutual information from given correlation matrix.
  *
- *  returns: Gaussian entropy.
+ * \param covM double** Correlation matrix
+ * \param n int Size of matrix.
+ * \returns Mutual information.
+ *
  */
 double gaussianMutualInformation(double** corrM, int n);
 

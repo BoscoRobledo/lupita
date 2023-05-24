@@ -1,8 +1,6 @@
 #ifndef GRAPH_H
 #define GRAPH_H
-#include "Vertex.h"
-#include "Edge.h"
-#include "UFDS.h"
+
 #include <utility>
 #include <ostream>
 #include <vector>
@@ -12,8 +10,19 @@
 #include <algorithm>
 #include <iostream>
 
+#include "Vertex.h"
+#include "Edge.h"
+#include "UFDS.h"
+
+
 using namespace std;
 template <typename vD, typename eD>
+
+/** \brief Directed Graph and traverse utilities.
+  * \param type eD type for object stored in Edge.
+  * \param type eD type for object stored in Edge.
+  * \author Juan Bosco Robledo Muñoz, 2017
+ */
 class Graph
 {
     private:
@@ -262,4 +271,5 @@ void Graph<vD, eD>::Print(ostream & out)
     }
     out << "\n";
 }
+
 #endif

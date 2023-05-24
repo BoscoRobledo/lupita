@@ -11,7 +11,7 @@
 				<Option object_output="obj/Debug/" />
 				<Option type="1" />
 				<Option compiler="gcc" />
-				<Option parameters="&lt;test/data/dataw &gt;test/output/chl2" />
+				<Option parameters="&lt;test/data/dataw &gt;test/output/chl3" />
 				<Compiler>
 					<Add option="-g" />
 				</Compiler>
@@ -38,11 +38,12 @@
 		</Compiler>
 		<Unit filename="Graph/Edge.h" />
 		<Unit filename="Graph/Graph.h" />
+		<Unit filename="Graph/UFDS.cpp" />
 		<Unit filename="Graph/UFDS.h" />
 		<Unit filename="Graph/Vertex.h" />
 		<Unit filename="Test/main.cpp" />
+		<Unit filename="UndirectedModels/ChowLiuTree/ChowLiuTree.cpp" />
 		<Unit filename="UndirectedModels/ChowLiuTree/ChowLiuTree.h" />
-		<Unit filename="UndirectedModels/UndirectedModel.cpp" />
 		<Unit filename="UndirectedModels/UndirectedModel.h" />
 		<Unit filename="UndirectedModels/tCherryJunctionTree/Cluster.h" />
 		<Unit filename="UndirectedModels/tCherryJunctionTree/PotentialUpdate.h" />
@@ -56,9 +57,6 @@
 		<Unit filename="Utilities/Matrix.cpp" />
 		<Unit filename="Utilities/Matrix.h" />
 		<Extensions>
-			<code_completion />
-			<envvars />
-			<debugger />
 			<lib_finder disable_auto="1" />
 		</Extensions>
 	</Project>

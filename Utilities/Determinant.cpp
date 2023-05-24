@@ -2,12 +2,13 @@
 #include <cstdlib>
 #include <cstdio>
 
-/*
- * Computes determinant from given matrix using Cholesky decomposition
- *  A: matrix
- *  n: Size of matrix.
- *  TODO: Check if log(det) works as well, in order to get smaller data
- *  returns: determinant.
+/** \brief Computes determinant from given matrix using Cholesky decomposition
+ *
+ * \param A double** matrix
+ * \param n int Size of matrix.
+ * \returns determinant.
+ * \todo Check if log(det) works as well, in order to get smaller data
+ *
  */
 double choleskyDeterminant(double **A, int n)
 {
@@ -33,12 +34,13 @@ double choleskyDeterminant(double **A, int n)
     return det;
 }
 
-/*
- * Computes determinant from given matrix using the best strategy for smaller matrices
- *  D: matrix
- *  n: Size of matrix.
- *  TODO: Check if log(det) works as well, in order to get smaller data
- *  returns: determinant.
+/** \brief Computes determinant from given matrix using the best strategy for smaller matrices
+ *
+ * \param D double** matrix
+ * \param order int Size of matrix.
+ * \returns determinant.
+ * \todo Check if log(det) works as well, in order to get smaller data
+ *
  */
 double determinant(double** D, int order)
 {

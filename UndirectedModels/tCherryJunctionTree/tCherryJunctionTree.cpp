@@ -1,10 +1,11 @@
+#define _USE_MATH_DEFINES
+#include <queue>
+#include <iostream>
+#include <cmath>
 #include "../../Graph/Graph.h"
 #include "../../Utilities/Determinant.h"
 #include "tCherryJunctionTree.h"
-#include <queue>
-#include <iostream>
-#include <fstream>
-#include <dirent.h>
+
 
 ///-----Properties
 double tCherryJunctionTree::getWeight()
@@ -34,11 +35,14 @@ tCherryJunctionTree::tCherryJunctionTree(ChowLiuTree* chowLiuTree, double** corr
     initVars();
 }
 
+/*
+ * Class for fitting gaussian model in an Chow&Liu Tree
+ * Juan Bosco Robledo Muñoz - 2017
+ */
 tCherryJunctionTree::tCherryJunctionTree(double** corrM, double** covM, int d) : UndirectedModel(corrM,covM,d,0)
 {
     initVars();
     baseModel=new ChowLiuTree(corrM,covM,d);
-    baseModel->build();
 }
 
 tCherryJunctionTree::~tCherryJunctionTree()
@@ -69,7 +73,7 @@ void tCherryJunctionTree::Getdonating_V_ariable(int CD, vector<int> &s, int CA)
 void tCherryJunctionTree::DFSChowLiuTree(int vertex_id, vector<bool> & visited, bool root, int parent_cluster)
 {
     visited[vertex_id] = true;
-    for (Edge<double> e : baseModel->structure.GetVertex(vertex_id).GetOutgoingEdges())
+    for (Edge<double> e : baseModel->getStructure.GetVertex(vertex_id)GetOutgoingEdges())
     {
         int neighbor_id = e.GetDestinationID();
         if (!visited[neighbor_id])

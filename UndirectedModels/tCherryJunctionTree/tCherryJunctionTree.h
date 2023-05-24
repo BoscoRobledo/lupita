@@ -1,18 +1,38 @@
 #ifndef TCHJT_HPP_INCLUDED
 #define TCHJT_HPP_INCLUDED
+#include <queue>
+#include <iostream>
 #include "../../Graph/Graph.h"
 #include "../UndirectedModel.h"
 #include "../ChowLiuTree/ChowLiuTree.h"
 #include "Cluster.h"
 #include "Separator.h"
 #include "PotentialUpdate.h"
-#include <queue>
-#include <iostream>
 
+/** \brief Class for fitting gaussian model in a k-order t-Cherry Junction Tree
+ * \author Juan Bosco Robledo Muñoz - 2017
+ */
 class tCherryJunctionTree : public UndirectedModel
 {
     public:
+
+        /** \brief Sets data needed to fit the model.
+         *
+         * \param corrM double** Correlation Matrix
+         * \param covM double** Covariance Matrix
+         * \param d int Size of Matrices
+         * \return ChowLiuTree(double** corrM, double** covM, int d):
+         *
+         */
         tCherryJunctionTree(double** corrM, double** covM, int d);
+
+        /*
+         * Sets data needed to fit the model.
+         *  corrM: Data correlation matrix
+         *  covM: Data covariance matrix.
+         *  d: Size of Matrices
+         *
+         */
         tCherryJunctionTree(ChowLiuTree* chowLiuTree, double** corrM, double** covM, int d);
         virtual ~tCherryJunctionTree();
         void build(int _k);

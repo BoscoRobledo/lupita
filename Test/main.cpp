@@ -31,7 +31,6 @@ int main()
             cin>>corrM[c][d];
 
     ChowLiuTree chowLiuTree(corrM,covM,D);
-    chowLiuTree.build();
 
     cout<<"Construccion de Chow Liu tree"<<endl<<chowLiuTree;
 
