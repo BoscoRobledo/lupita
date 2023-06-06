@@ -21,7 +21,7 @@ void ChowLiuTree::build()
       for(int b=0;b<d;b++)
           if(c!=b)
               //Maximizing rho^2 is equivalent for maximizing gaussian MI
-              aux.AddEdge(c, b, corrM[c][b]*corrM[c][b], false);
+              aux.AddEdge(c, b, corrM[c][b]*corrM[c][b]);
 
     //Get MST from the auxiliar graph previously constructed.
     Edge<double> maxCorrelationPair=structure.FillMWST(aux);

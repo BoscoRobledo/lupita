@@ -18,7 +18,7 @@ class ChowLiuTree : public UndirectedModel
          * \return Chow&Liu Tree built from Matrices using an MWST on a complete graph with weights given by correlation squared.
          *
          */
-        ChowLiuTree(double** corrM, double** covM, int d): UndirectedModel(corrM,covM,d,2) { }
+        ChowLiuTree(double** corrM, double** covM, int d): UndirectedModel(corrM,covM,d,2) { build(); }
 
     private:
 

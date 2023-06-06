@@ -11,7 +11,7 @@
 				<Option object_output="obj/Debug/" />
 				<Option type="1" />
 				<Option compiler="gcc" />
-				<Option parameters="&lt;test/data/dataw &gt;test/output/chl3" />
+				<Option parameters="C:\Users\ROMJ23031\Documents\Lecturas\code\lupita\Test\data\dataw" />
 				<Compiler>
 					<Add option="-g" />
 				</Compiler>
@@ -21,13 +21,10 @@
 				<Option object_output="obj/Release/" />
 				<Option type="1" />
 				<Option compiler="gcc" />
-				<Option parameters="&lt;dataw" />
+				<Option parameters="../../Test/data/dataw ../../Test/output/chl4" />
 				<Compiler>
 					<Add option="-O2" />
 				</Compiler>
-				<Linker>
-					<Add option="-s" />
-				</Linker>
 			</Target>
 		</Build>
 		<Compiler>

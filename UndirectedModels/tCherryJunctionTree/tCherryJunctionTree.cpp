@@ -6,74 +6,21 @@
 #include "../../Utilities/Determinant.h"
 #include "tCherryJunctionTree.h"
 
+// { Construction of k order t-Cherry Junction Tree from a Chow&Liu Tree
 
-///-----Properties
-double tCherryJunctionTree::getWeight()
-{
-    return weight;
-}
-
-double tCherryJunctionTree::getModelDifferentialEntropy()
-{
-    return diffEntropy;
-}
-
-///-----Properties
-
-///ctor - dtor
-
-void tCherryJunctionTree::initVars()
-{
-    weight=0.0;
-    diffEntropy=0.0;
-    k=0;
-}
-
-
-tCherryJunctionTree::tCherryJunctionTree(ChowLiuTree* chowLiuTree, double** corrM, double** covM, int d) : UndirectedModel(corrM,covM,d,0), baseModel(chowLiuTree)
-{
-    initVars();
-}
-
-/*
- * Class for fitting gaussian model in an Chow&Liu Tree
- * Juan Bosco Robledo Muñoz - 2017
+/** \brief Do a DFS in Chow-Liu Tree to build a 2 order t-Cherry Junction Tree
+ *
+ * \param vertex_id int Current vertex ID in DFS
+ * \param visited vector<bool>& Visited nodes vector
+ * \param root bool DFS is in root node.
+ * \param parent_cluster int Cluster in 2 order t-Cherry Junction Tree built in previous recursive call
+ * \return void
+ *
  */
-tCherryJunctionTree::tCherryJunctionTree(double** corrM, double** covM, int d) : UndirectedModel(corrM,covM,d,0)
-{
-    initVars();
-    baseModel=new ChowLiuTree(corrM,covM,d);
-}
-
-tCherryJunctionTree::~tCherryJunctionTree()
-{
-}
-
-///ctor - dtor
-
-
-///-----Construction of t=2 Cherry Junction Tree from a Chow&Liu Tree
-
-void tCherryJunctionTree::Getdonating_V_ariable(int CD, vector<int> &s, int CA)
-{
-    for (int vD : tchjt.GetVertexData(CD).nodes)
-    {
-        bool exists=false;
-        for (int vS : tchjt.GetVertexData(CA).nodes)
-            if(vS==vD)
-            {
-                exists=true;
-                break;
-            }
-        if(!exists)
-            s.push_back(vD);
-    }
-}
-
 void tCherryJunctionTree::DFSChowLiuTree(int vertex_id, vector<bool> & visited, bool root, int parent_cluster)
 {
     visited[vertex_id] = true;
-    for (Edge<double> e : baseModel->getStructure.GetVertex(vertex_id)GetOutgoingEdges())
+    for (Edge<double> e : baseModel->getStructure().GetVertex(vertex_id).GetOutgoingEdges())
     {
         int neighbor_id = e.GetDestinationID();
         if (!visited[neighbor_id])
@@ -90,21 +37,22 @@ void tCherryJunctionTree::DFSChowLiuTree(int vertex_id, vector<bool> & visited, 
             int cluster_id=tchjt.AddVertex(cl);
             if(!root)
             {
-                //create edges in both ways
-                Separator s,s2;
+                Separator s,s2;                  /**< create edges in both ways */
                 s.nodes.push_back(vertex_id);
                 s2.nodes.push_back(vertex_id);
-                //select proper Xv in forward separator
-                if(vertex_id==tchjt.GetVertexData(parent_cluster).nodes[0])
+
+                if(vertex_id==tchjt.GetVertexData(parent_cluster).nodes[0]) /**< select proper Xv in forward separator */
                     s.Xv.push_back(tchjt.GetVertexData(parent_cluster).nodes[1]);
                 else
                     s.Xv.push_back(tchjt.GetVertexData(parent_cluster).nodes[0]);
-                s2.Xv.push_back(neighbor_id);
-                s.Xu=s2.Xv[0];
+
+                s2.Xv.push_back(neighbor_id);   /**< select proper Xv in backward separator */
+
+                s.Xu=s2.Xv[0];          /**< Set active cluster dominant variables in each separator */
                 s2.Xu=s.Xv[0];
 
-                //initialization of weight-determinant calculation variables
-                double* mrow=new double[1];
+
+                double* mrow=new double[1];  /**< initialization of weight-determinant calculation variables */
                 s.corrMCholDec.push_back(mrow);
                 s2.corrMCholDec.push_back(mrow);
                 mrow=new double[1];
@@ -118,8 +66,7 @@ void tCherryJunctionTree::DFSChowLiuTree(int vertex_id, vector<bool> & visited, 
                 s.complete=s2.complete=true;
                 s.weight=s2.weight=0.0;
 
-
-                tchjt.AddEdge(parent_cluster,cluster_id,s);
+                tchjt.AddEdge(parent_cluster,cluster_id,s); /**< Add edges both ways */
                 tchjt.AddEdge(cluster_id,parent_cluster,s2);
             }
             else
@@ -127,12 +74,18 @@ void tCherryJunctionTree::DFSChowLiuTree(int vertex_id, vector<bool> & visited, 
                 parent_cluster=cluster_id;
                 mainV=cluster_id;
             }
-            root=false;
+
             DFSChowLiuTree(neighbor_id,visited,false,cluster_id);
         }
     }
 }
 
+/** \brief Builds a k order t-Cherry Junction Tree from base model by order update algorithm
+ *
+ * \param _k int desired order
+ * \return void
+ *
+ */
 void tCherryJunctionTree::build(int _k)
 {
     vector<bool> visited(d,false);
@@ -140,26 +93,28 @@ void tCherryJunctionTree::build(int _k)
     k=baseModel->getOrder();
     for(int kappa=3;kappa<=k;kappa++)
         increaseOrder();
-
 }
 
+//}
 
-///-----Construction from 2 tCherry Junction Tree (Chow&Liu Tree)
+//{ Order Update
 
-
-///-----Order Update
-
-//Equation 10 implementation
+/** \brief Weight increment calculation.
+ *
+ * \param gamma PotentialUpdate& Related Potential update
+ * \param e Edge<Separator>& Separator involved
+ * \return void
+ *
+ */
 void tCherryJunctionTree::setW(PotentialUpdate &gamma,Edge<Separator>& e)
 {
     vector<int> nodes;
-    //ToDo: This can be done in O(1)
-    gamma.corrMCholDec.assign(e.GetData().corrMCholDec.begin(),e.GetData().corrMCholDec.end());
+    gamma.corrMCholDec.assign(e.GetData().corrMCholDec.begin(),e.GetData().corrMCholDec.end()); /**< TODO: This can be done in O(1) by pointer reference */
     gamma.covMCholDec.assign(e.GetData().covMCholDec.begin(),e.GetData().covMCholDec.end());
     nodes.assign(e.GetData().nodes.begin(),e.GetData().nodes.end());
 
     //this section makes this function O(k^2) complexity
-        //Lambda_S_ij U X_u
+    //Lambda_S_ij U X_u
     gamma.corrMCholDec.push_back(new double[k]);
     gamma.covMCholDec.push_back(new double[k]);
     int nodes_size=k-1;
@@ -175,6 +130,7 @@ void tCherryJunctionTree::setW(PotentialUpdate &gamma,Edge<Separator>& e)
         gamma.corrMCholDec[nodes_size][j]=(nodes_size==j)?sqrt(corrM[nodes[nodes_size]][nodes[nodes_size]]-sumCorr):((1.0/gamma.corrMCholDec[j][j])*(corrM[nodes[nodes_size]][nodes[j]]-sumCorr));
         gamma.covMCholDec[nodes_size][j]=(nodes_size==j)?sqrt(covM[nodes[nodes_size]][nodes[nodes_size]]-sumCov):((1.0/gamma.covMCholDec[j][j])*(covM[nodes[nodes_size]][nodes[j]]-sumCov));
     }
+
     double num=gamma.corrMCholDec[nodes_size][nodes_size]*gamma.corrMCholDec[nodes_size][nodes_size];
     //Lambda_S_ij U X_v U X_u
     nodes[nodes_size]=gamma.Xv;
@@ -206,7 +162,6 @@ void tCherryJunctionTree::setW(PotentialUpdate &gamma,Edge<Separator>& e)
     }
     double den=gamma.corrMCholDec[nodes_size][nodes_size]*gamma.corrMCholDec[nodes_size][nodes_size];
     gamma.wInc=0.5*log(num/den);
-
 }
 
     ///--Priority queue creation
@@ -260,6 +215,7 @@ void tCherryJunctionTree::increaseOrder()
     //Priority queue printing
     priority_queue<PotentialUpdate> ax;
     cout<<"Valores de cola de prioridad"<<endl<<"CA-CD-XV-XU-WINC"<<endl;
+
     while(!Gamma.empty())
     {
         PotentialUpdate t=Gamma.top();
@@ -267,6 +223,7 @@ void tCherryJunctionTree::increaseOrder()
         Gamma.pop();
         cout<<t.CA<<" "<<t.CD<<" "<<t.Xv<<" "<<t.Xu<<" "<<t.wInc<<endl;
     }
+
     while(!ax.empty())
     {
         PotentialUpdate t=ax.top();
@@ -295,8 +252,8 @@ void tCherryJunctionTree::increaseOrder()
                 for (Edge<Separator>& e : tchjt.GetVertex(T.CD).GetOutgoingEdges())       ///Link donor cluster neighbors to CA'
                     if(!(tchjt.GetVertex(e.GetDestinationID()).GetData().deleted) && e.GetDestinationID()!=T.CA)
                     {
-                        tchjt.AddEdge(e.GetDestinationID(),T.CA,e.GetData(),false);  ///In case 4 new separators are always of size k-1
-                        tchjt.AddEdge(T.CA,e.GetDestinationID(),e.GetData(),false);   ///So keeping the data in old ones works fine
+                        tchjt.AddEdge(e.GetDestinationID(),T.CA,e.GetData());  ///In case 4 new separators are always of size k-1
+                        tchjt.AddEdge(T.CA,e.GetDestinationID(),e.GetData());   ///So keeping the data in old ones works fine
                         if(!(tchjt.GetVertex(e.GetDestinationID()).GetData().updated))
                         {
                             PotentialUpdate gamma;
@@ -361,6 +318,100 @@ void tCherryJunctionTree::increaseOrder()
     //ProcessBUDS();
     //clean();
 }
+
+
+
+
+// { Print
+
+/** \brief Prints out t-Cherry Junction Tree as text in given stream
+ *
+ * \param out ostream& Destination stream
+ *
+ */
+void tCherryJunctionTree::Print(ostream & out)
+{
+    out << "W= "<<getWeight()<<endl<<"Clusters: \n";
+    for(int c=0;c<tchjt.VertexCount();c++)
+    {
+        if(!(tchjt.GetVertex(c).GetData().deleted))
+        {
+            out<<"# "<<tchjt.GetVertex(c).GetID()<<":( ";
+            for (int d : tchjt.GetVertex(c).GetData().nodes)
+                out << d << " ";
+            out<<"), W= "<<tchjt.GetVertex(c).GetData().weight<<"\n";
+        }
+
+    }
+
+    out << "\n\n";
+    out << "Out Separators: \n";
+    for(int c=0;c<tchjt.VertexCount();c++)
+    {
+        if(!(tchjt.GetVertex(c).GetData().deleted))
+        {
+            Vertex<Cluster,Separator> v=tchjt.GetVertex(c);
+            out << v.GetID() << "-> {";
+            for (Edge<Separator> e : v.GetOutgoingEdges())
+            {
+                out << " " << tchjt.GetVertex(e.GetDestinationID()).GetID()<<" - C:"<<e.GetData().complete<<" - DV:"<<e.GetData().Xu<<" - V:";
+                for(int nod : e.GetData().Xv)
+                    out << "," << nod;
+                out<<" - NODES:(";
+                for (int nod : e.GetData().nodes)
+                    out << " " << nod;
+                out<<")| ";
+            }
+            out << "}\n";
+        }
+    }
+    out << "\n\n";
+    out << "In Separators \n";
+    for(int c=0;c<tchjt.VertexCount();c++)
+    {
+        if(!(tchjt.GetVertex(c).GetData().deleted))
+        {
+            Vertex<Cluster,Separator> v=tchjt.GetVertex(c);
+            out << v.GetID() << "<-{";
+            for (Edge<Separator> e : v.GetIngoingEdges())
+            {
+                out << " " << tchjt.GetVertex(e.GetOriginID()).GetID()<<"- C:"<<e.GetData().complete<<" - DV:"<<e.GetData().Xu<<" - V:";
+                for(int nod : e.GetData().Xv)
+                    out << "," << nod;
+                out<<" - NODES: (";
+                for (int nod : e.GetData().nodes)
+                    out << " " << nod;
+                out<<")| ";
+            }
+            out << "}\n";
+        }
+    }
+    out << "\n";
+}
+
+
+
+
+
+
+
+void tCherryJunctionTree::Getdonating_V_ariable(int CD, vector<int> &s, int CA)
+{
+    for (int vD : tchjt.GetVertexData(CD).nodes)
+    {
+        bool exists=false;
+        for (int vS : tchjt.GetVertexData(CA).nodes)
+            if(vS==vD)
+            {
+                exists=true;
+                break;
+            }
+        if(!exists)
+            s.push_back(vD);
+    }
+}
+
+
 
 
 /*void tCherryJunctionTree::ProcessBUDS()
@@ -644,81 +695,3 @@ void tCherryJunctionTree::clean()
 
 
 
-///-----Order Update
-
-
-
-
-
-
-
-
-
-
-ostream & operator<<(ostream & out, tCherryJunctionTree & g)
-{
-
-    g.Print(out);
-    return out;
-}
-
-
-void tCherryJunctionTree::Print(ostream & out)
-{
-    out << "W= "<<getWeight()<<endl<<"Clusters: \n";
-    for(int c=0;c<tchjt.VertexCount();c++)
-    {
-        if(!(tchjt.GetVertex(c).GetData().deleted))
-        {
-            out<<"# "<<tchjt.GetVertex(c).GetID()<<":( ";
-            for (int d : tchjt.GetVertex(c).GetData().nodes)
-                out << d << " ";
-            out<<"), W= "<<tchjt.GetVertex(c).GetData().weight<<"\n";
-        }
-
-    }
-
-    out << "\n\n";
-    out << "Out Separators: \n";
-    for(int c=0;c<tchjt.VertexCount();c++)
-    {
-        if(!(tchjt.GetVertex(c).GetData().deleted))
-        {
-            Vertex<Cluster,Separator> v=tchjt.GetVertex(c);
-            out << v.GetID() << "-> {";
-            for (Edge<Separator> e : v.GetOutgoingEdges())
-            {
-                out << " " << tchjt.GetVertex(e.GetDestinationID()).GetID()<<" - C:"<<e.GetData().complete<<" - DV:"<<e.GetData().Xu<<" - V:";
-                for(int nod : e.GetData().Xv)
-                    out << "," << nod;
-                out<<" - NODES:(";
-                for (int nod : e.GetData().nodes)
-                    out << " " << nod;
-                out<<")| ";
-            }
-            out << "}\n";
-        }
-    }
-    out << "\n\n";
-    out << "In Separators \n";
-    for(int c=0;c<tchjt.VertexCount();c++)
-    {
-        if(!(tchjt.GetVertex(c).GetData().deleted))
-        {
-            Vertex<Cluster,Separator> v=tchjt.GetVertex(c);
-            out << v.GetID() << "<-{";
-            for (Edge<Separator> e : v.GetIngoingEdges())
-            {
-                out << " " << tchjt.GetVertex(e.GetOriginID()).GetID()<<"- C:"<<e.GetData().complete<<" - DV:"<<e.GetData().Xu<<" - V:";
-                for(int nod : e.GetData().Xv)
-                    out << "," << nod;
-                out<<" - NODES: (";
-                for (int nod : e.GetData().nodes)
-                    out << " " << nod;
-                out<<")| ";
-            }
-            out << "}\n";
-        }
-    }
-    out << "\n";
-}
